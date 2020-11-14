@@ -226,9 +226,15 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._W = None
-        self._b = None
+        #self._W = None
+        #self._b = None
+        
+        #use the imput and output size as well as the xavier_init method to set initial W and b.
+        self._W = xavier_init([n_in, n_out], gain = 1.0)
+        self._b = xavier_init(n_out, gain = 1.0)
+        
 
+        #what should I do here? leave as is for now?
         self._cache_current = None
         self._grad_W_current = None
         self._grad_b_current = None
@@ -253,6 +259,18 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        weights_incl_bias = np.append(self._W, self._b, axis = 0)
+        ones = np.ones(np.shape(x)[0])
+        x_incl_one = x.copy()
+        x_incl_one = np.append(x_incl_one, ones, axis = 1)
+        output = np.matmul(x_incl_one, weights_incl_bias)
+        
+        self._cache_current = output
+        
+        return output
+        
+        
         pass
 
         #######################################################################
@@ -276,7 +294,12 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        self._grad_W_current = np.matmul(np.transpose(self._cache_current), grad_z)
+        ones = np.ones(np.shape(grad_z)[0])
+        self._grad_b_current = np.matmul(ones, grad_z)
+        grad_X_current = np.matmul(grad_z, np.transpose(self._W))
+        
+        return grad_X_current 
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -313,8 +336,8 @@ class MultiLayerNetwork(object):
         Arguments:
             - input_dim {int} -- Number of features in the input (excluding 
                 the batch dimension).
-            - neurons {list} -- Number of neurons in each linear layer 
-                represented as a list. The length of the list determines the 
+            - neurons {list} -- Number of neurons in each linear layer 
+                represented as a list. The length of the list determines the 
                 number of linear layers.
             - activations {list} -- List of the activation functions to apply 
                 to the output of each linear layer.
@@ -629,6 +652,35 @@ def example_main():
     targets = y_val.argmax(axis=1).squeeze()
     accuracy = (preds == targets).mean()
     print("Validation accuracy: {}".format(accuracy))
+    
+    
+    ###################################
+    #MY TESTS
+    ###################################
+    
+    #initialisation
+    print(xavier_init([3, 4]))
+    
+    #Feed forward
+    test_weights = np.array([[2,2,2,2],[3,3,3,3],[4,4,4,4]])
+    test_bias = np.array([2,2,2,2])
+    test_batch= np.array([[2,2,2], [2,2,2]])
+    ones=np.ones(3)
+    print(ones)
+    out = np.append(test_batch, [ones], axis = 1)
+    print(np.shape(test_batch)[1])
+    
+    print(test_weights)
+    print(test_bias)
+    print(test_batch) #batch size 2, 3 input features
+    print(out)
+    print(np.matmul(test_batch, test_weights)+test_bias)
+    
+    
+    
+     ###################################
+    #END MY TESTS
+    ###################################
 
 
 if __name__ == "__main__":
