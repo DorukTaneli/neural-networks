@@ -231,8 +231,9 @@ class LinearLayer(Layer):
         
         #use the imput and output size as well as the xavier_init method to set initial W and b.
         self._W = xavier_init([n_in, n_out], gain = 1.0)
+        print("initial weights", self._W)
         self._b = xavier_init(n_out, gain = 1.0)
-        
+        print("initial bias", self._b)
 
         #what should I do here? leave as is for now?
         self._cache_current = None
@@ -260,13 +261,19 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         
-        weights_incl_bias = np.append(self._W, self._b, axis = 0)
+      
+        weights_incl_bias = self._W.copy()
+        weights_incl_bias = np.append(weights_incl_bias, [self._b], axis = 0)
+        print("FORWARD: Weights incl bias",weights_incl_bias )
         ones = np.ones(np.shape(x)[0])
-        x_incl_one = x.copy()
-        x_incl_one = np.append(x_incl_one, ones, axis = 1)
-        output = np.matmul(x_incl_one, weights_incl_bias)
         
-        self._cache_current = output
+        x_incl_one = x.copy()
+        x_incl_one =  np.concatenate((x_incl_one, np.transpose([ones])), axis = 1)
+        print("FORWARD: X incl ones",x_incl_one)
+        output = np.matmul(x_incl_one, weights_incl_bias)
+        print("Output should be 2x4", output)
+        
+        self._cache_current = x
         
         return output
         
@@ -295,6 +302,7 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._grad_W_current = np.matmul(np.transpose(self._cache_current), grad_z)
+        print("gradient weights", self._grad_W_current)
         ones = np.ones(np.shape(grad_z)[0])
         self._grad_b_current = np.matmul(ones, grad_z)
         grad_X_current = np.matmul(grad_z, np.transpose(self._W))
@@ -316,7 +324,8 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        self._W = self._W - learning_rate*self._grad_W_current
+        self._b = self._b - learning_rate*self._grad_b_current
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -661,21 +670,22 @@ def example_main():
     #initialisation
     print(xavier_init([3, 4]))
     
-    #Feed forward
-    test_weights = np.array([[2,2,2,2],[3,3,3,3],[4,4,4,4]])
-    test_bias = np.array([2,2,2,2])
-    test_batch= np.array([[2,2,2], [2,2,2]])
-    ones=np.ones(3)
+    x=np.array([[1,2,3],[4,5, 6]]) #batch size 2, input size 3
+    ones = np.ones(np.shape(x)[0])
     print(ones)
-    out = np.append(test_batch, [ones], axis = 1)
-    print(np.shape(test_batch)[1])
+    x_incl_one = x.copy()
+    print(x_incl_one)
+    x_incl_one = np.concatenate((x_incl_one, np.transpose([ones])), axis = 1)
+    print(x_incl_one)
+    layer = LinearLayer(n_in=3, n_out=4)
+    print(layer.forward(x))
     
-    print(test_weights)
-    print(test_bias)
-    print(test_batch) #batch size 2, 3 input features
-    print(out)
-    print(np.matmul(test_batch, test_weights)+test_bias)
     
+    grad_loss_wrt_outputs = np.ones((2, 4))
+    
+    grad_loss_wrt_inputs = layer.backward(grad_loss_wrt_outputs) 
+    print(grad_loss_wrt_inputs)
+    print(layer.update_params(0.5))
     
     
      ###################################
