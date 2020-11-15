@@ -121,7 +121,7 @@ class SigmoidLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._cache_current = x
-        sigmoid_output = 1/(1+np.exp(x))
+        sigmoid_output = 1/(1+np.exp(-x))
         
         return sigmoid_output 
 
@@ -146,7 +146,7 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        derivation_sigmoid = (1/(1+np.exp(self._cache_current)))*(1-(1/(1+np.exp(self._cache_current))))
+        derivation_sigmoid = (1/(1+np.exp(-self._cache_current)))*(1-(1/(1+np.exp(-self._cache_current))))
         grad_X_sigmoid = grad_z*derivation_sigmoid
         return grad_X_sigmoid
 
@@ -402,8 +402,7 @@ class MultiLayerNetwork(object):
         Performs backward pass through the network.
 
         Arguments:
-            grad_z {np.ndarray} -- Gradient array of shape (1,
-                #_neurons_in_final_layer).
+            grad_z {np.ndarray} -- batch_size, number of final neurons).
 
         Returns:
             {np.ndarray} -- Array containing gradient with repect to layer
@@ -703,11 +702,13 @@ def example_main():
     
     #Test the sigmoid layer
     print("SIGMOID LAYER TESTS")
-    test_z = np.ones((2, 3))
+    test_z = np.ones((2, 3))*0.5
     
     #print(1/(1-2**x))
     sigmoid=SigmoidLayer()
+    print("Forward:")
     print(sigmoid.forward(x))
+    print("Backward:")
     print(sigmoid.backward(test_z))
     
     
@@ -717,8 +718,9 @@ def example_main():
     #relu_test_2 = np.maximum(relu_test, 0)
     #print(np.minimum(1, relu_test_2))
     relu=ReluLayer()
-
+    print("Forward:")
     print(relu.forward(relu_x))
+    print("Backward:")
     print(relu.backward(test_z))
     
      ###################################
