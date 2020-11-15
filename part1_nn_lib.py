@@ -120,7 +120,10 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        self._cache_current = x
+        sigmoid_output = 1/(1+np.exp(x))
+        
+        return sigmoid_output 
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -143,7 +146,9 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        derivation_sigmoid = (1/(1+np.exp(self._cache_current)))*(1-(1/(1+np.exp(self._cache_current))))
+        grad_X_sigmoid = grad_z*derivation_sigmoid
+        return grad_X_sigmoid
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -177,7 +182,10 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        self._cache_current = x
+        relu_output = np.maximum(x, 0)
+        return relu_output
+        
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -200,7 +208,11 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        relu = np.maximum(self._cache_current, 0)
+        derivation_relu = np.minimum(1, relu)
+        grad_X_relu = grad_z*derivation_relu
+        
+        return (grad_X_relu)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -235,7 +247,6 @@ class LinearLayer(Layer):
         self._b = xavier_init(n_out, gain = 1.0)
         print("initial bias", self._b)
 
-        #what should I do here? leave as is for now?
         self._cache_current = None
         self._grad_W_current = None
         self._grad_b_current = None
@@ -671,6 +682,9 @@ def example_main():
     print(xavier_init([3, 4]))
     
     x=np.array([[1,2,3],[4,5, 6]]) #batch size 2, input size 3
+    
+    
+    #Test the linear layer
     ones = np.ones(np.shape(x)[0])
     print(ones)
     x_incl_one = x.copy()
@@ -687,6 +701,25 @@ def example_main():
     print(grad_loss_wrt_inputs)
     print(layer.update_params(0.5))
     
+    #Test the sigmoid layer
+    print("SIGMOID LAYER TESTS")
+    test_z = np.ones((2, 3))
+    
+    #print(1/(1-2**x))
+    sigmoid=SigmoidLayer()
+    print(sigmoid.forward(x))
+    print(sigmoid.backward(test_z))
+    
+    
+     #Test the relu layer
+    print("RELU LAYER TESTS")
+    relu_x=np.array([[1,2,3],[4,-5, 6]])
+    #relu_test_2 = np.maximum(relu_test, 0)
+    #print(np.minimum(1, relu_test_2))
+    relu=ReluLayer()
+
+    print(relu.forward(relu_x))
+    print(relu.backward(test_z))
     
      ###################################
     #END MY TESTS
