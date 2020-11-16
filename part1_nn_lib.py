@@ -149,6 +149,7 @@ class SigmoidLayer(Layer):
         derivation_sigmoid = (1/(1+np.exp(-self._cache_current)))*(1-(1/(1+np.exp(-self._cache_current))))
         grad_X_sigmoid = grad_z*derivation_sigmoid
         return grad_X_sigmoid
+        #Irgendetwas stimmt hier glaube ich noch nicht...
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -275,7 +276,7 @@ class LinearLayer(Layer):
       
         weights_incl_bias = self._W.copy()
         weights_incl_bias = np.append(weights_incl_bias, [self._b], axis = 0)
-        print("FORWARD: Weights incl bias",weights_incl_bias )
+        print("FORWARD: Weights incl bias",np.shape(weights_incl_bias ))
         ones = np.ones(np.shape(x)[0])
         
         x_incl_one = x.copy()
@@ -316,8 +317,9 @@ class LinearLayer(Layer):
         print("gradient weights", self._grad_W_current)
         ones = np.ones(np.shape(grad_z)[0])
         self._grad_b_current = np.matmul(ones, grad_z)
+        print("shape current weights", np.shape(self._W))
         grad_X_current = np.matmul(grad_z, np.transpose(self._W))
-        
+        print("gradient X", self._grad_W_current)
         return grad_X_current 
 
         #######################################################################
@@ -369,7 +371,22 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._layers = None
+        #Create empty list to store the layers
+        layers=[]
+        dimensions = [input_dim] + neurons
+        print("Input_dimension", input_dim)
+        print("Neurons", neurons)
+        print("Concat Dimensions", dimensions)
+        
+        for dim in range(1, len(dimensions)):
+            layers.append(LinearLayer(dimensions[dim-1], dimensions[dim]))
+            if (activations[dim-1] == "relu"):
+                layers.append(ReluLayer())
+            if (activations[dim-1] == "sigmoid"):
+                layers.append(SigmoidLayer())
+        
+        print(layers)
+        self._layers = layers
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -388,7 +405,13 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return np.zeros((1, self.neurons[-1])) # Replace with your own code
+        
+        for layer in range(0, len(self._layers)):
+           x = self._layers[layer].forward(x)
+           print("Shape of Forward pass:",np.shape(x))
+        return x
+        
+        
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -411,7 +434,12 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        for layer in range(len(self._layers)-1, -1, -1):
+           print("Shape of grad_z", np.shape(grad_z))
+           grad_z = self._layers[layer].backward(grad_z)
+           print("Shape of Gradient", grad_z)
+        
+        return grad_z
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -428,7 +456,11 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        for layer in range(0, len(self._layers)):
+            if (isinstance(self._layers[layer], LinearLayer)):
+                print("It's a Linear layer!")
+                self._layers[layer].update_params(learning_rate)
+ 
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -631,6 +663,7 @@ class Preprocessor(object):
 
 
 def example_main():
+    '''
     input_dim = 4
     neurons = [16, 3]
     activations = ["relu", "identity"]
@@ -671,7 +704,7 @@ def example_main():
     targets = y_val.argmax(axis=1).squeeze()
     accuracy = (preds == targets).mean()
     print("Validation accuracy: {}".format(accuracy))
-    
+    '''
     
     ###################################
     #MY TESTS
@@ -696,9 +729,9 @@ def example_main():
     
     grad_loss_wrt_outputs = np.ones((2, 4))
     
-    grad_loss_wrt_inputs = layer.backward(grad_loss_wrt_outputs) 
-    print(grad_loss_wrt_inputs)
-    print(layer.update_params(0.5))
+    #grad_loss_wrt_inputs = layer.backward(grad_loss_wrt_outputs) 
+    #print(grad_loss_wrt_inputs)
+    #print(layer.update_params(0.5))
     
     #Test the sigmoid layer
     print("SIGMOID LAYER TESTS")
@@ -723,6 +756,11 @@ def example_main():
     print("Backward:")
     print(relu.backward(test_z))
     
+    
+    network = MultiLayerNetwork(input_dim=3, neurons=[6, 2], activations=["relu", "sigmoid"])
+    network.forward(x)
+    network.backward(np.ones((2, 2)))
+    network.update_params(0.02)
      ###################################
     #END MY TESTS
     ###################################
