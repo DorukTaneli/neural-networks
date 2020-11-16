@@ -151,6 +151,7 @@ class SigmoidLayer(Layer):
         return grad_X_sigmoid
         #Irgendetwas stimmt hier glaube ich noch nicht...
 
+        
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -213,7 +214,7 @@ class ReluLayer(Layer):
         derivation_relu = np.minimum(1, relu)
         grad_X_relu = grad_z*derivation_relu
         
-        return (grad_X_relu)
+        return grad_X_relu
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -521,7 +522,13 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._loss_layer = None
+        if (loss_fun == "mse"):
+            self._loss_layer = MSELossLayer() #potentially needs a layer as input
+        
+        if (loss_fun == "cross_entropy"):
+            self._loss_layer = CrossEntropyLossLayer()
+            
+        else: print("Please chose a valid loss function")
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -544,8 +551,17 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
-
+        shuffable = np.concatenate((input_dataset, target_dataset), axis=1)
+        print(shuffable)
+        np.random.shuffle(shuffable)
+        print(shuffable)
+        input_columns=np.shape(input_dataset)[1]
+        print(input_columns)
+        input_dataset = shuffable[:, :input_columns]
+        target_dataset = shuffable[:, input_columns:]
+        print(target_dataset)
+        
+        return input_dataset, target_dataset
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -573,7 +589,24 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        
+        for epoch in range(self.nb_epoch):
+        
+            if (self.shuffle_flag):
+                Trainer.shuffle(input_dataset, target_dataset) #shuffle is static, this is fine
+            
+        
+            input_dataset_batches = np.array_split(input_dataset, self.batch_size)
+            target_dataset_batches = np.array_split(target_dataset, self.batch_size)
+            
+            for x in range(np.shape(input_dataset_batches)[0]):
+                prediction = self.network.forward(input_dataset_batches[x])
+                loss = self._loss_layer.forward(prediction, target_dataset_batches[x])
+                loss_gradient = self._loss_layer.backward()
+                self.network.backward(loss_gradient)
+                self.network.update_params(self.learning_rate)
+    
+    
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -592,7 +625,9 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        prediction = self.network.forward(input_dataset)
+        loss = self._loss_layer.forward(prediction, target_dataset)
+        return loss
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -761,6 +796,26 @@ def example_main():
     network.forward(x)
     network.backward(np.ones((2, 2)))
     network.update_params(0.02)
+    
+    
+    #Test training
+    input_dataset = np.array([[1,2,3],[3,4,5],[1,2,3],[3,4,5],[1,2,3],[3,4,5],[1,2,3],[3,4,5]])
+    target_dataset = np.array([[1],[3],[1],[3],[1],[3],[1],[3]])
+    shuffable = np.concatenate((input_dataset, target_dataset), axis=1)
+    print(shuffable)
+    np.random.shuffle(shuffable)
+    print(shuffable)
+    input_columns=np.shape(input_dataset)[1]
+    print(input_columns)
+    input_dataset = shuffable[:, :input_columns]
+    output_dataset = shuffable[:, input_columns:]
+    print(output_dataset)
+    
+    
+    trainer = Trainer( network=network, batch_size=32, nb_epoch=10, learning_rate=1.0e-3, shuffle_flag=True, loss_fun="mse")
+    trainer.train(input_dataset, target_dataset)
+    
+    print("Validation loss = ", trainer.eval_loss(input_dataset, target_dataset))
      ###################################
     #END MY TESTS
     ###################################
