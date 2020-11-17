@@ -23,7 +23,11 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-
+        
+        #Attributes to store constants to be applied on test data
+        self.lb = preprocessing.LabelBinarizer()
+        slf.min_max_scaler1 = preprocessing.MinMaxScaler()
+        
         # Replace this code with your own
         X, _ = self._preprocessor(x, training = True)
         self.input_size = X.shape[1]
@@ -58,40 +62,39 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
         
-        ####Calculate and store parameters:
-        if training:
-            #calculate preprocessing values
-            pass
-        else:
-            #apply existing values
-            pass
+        # TODO: Normalize numerical values to improve learning:
+        
+        if training: #training data: calculate and apply preprocessing values            
+            #Handle textual values:
+            x = x.join(pd.DataFrame(self.lb.fit_transform(x["ocean_proximity"]), #fit LabelBinarizer
+                        columns=lb.classes_, 
+                        index=x.index))
             
-        
-        ###Handle missing values:
-        x.fillna(0); #replaces missing values with 0
-        
-        #if we need to handle missing values in target array:
-        if isinstance(y, pd.DataFrame):
-            y.fillna(0)
-        
-        
-        ####Handle textual values:
-        lb = preprocessing.LabelBinarizer()
-        
-        x = x.join(pd.DataFrame(lb.fit_transform(x["ocean_proximity"]),
-                          columns=lb.classes_, 
-                          index=x.index))
-        
-#        #if above doesnt work try this:
+            #normalize
+            x = self.min_max_scaler1.fit_transform(x) #fit and transform
+            
+        else: #test data: apply existing values
+            #Handle textual values:
+            x = x.join(pd.DataFrame(self.lb.transform(x["ocean_proximity"]), #only transform using LabelBinarizer
+                        columns=lb.classes_, 
+                        index=x.index))
+            
+            #normalize:
+            x = self.min_max_scaler1.transform(x) #only transform
+            
+            
+#        #if handling textual values doesnt work try this:
 #        lb.fit(x['ocean_proximity'])
 #        transformed = lb.transform(x['ocean_proximity'])
 #        ohe_df = pd.DataFrame(transformed)
 #        x = pd.concat([x, ohe_df], axis=1).drop(['ocean_proximity'], axis=1)
-        
-        
-        ####Normalize numerical values to improve learning:
-        
-        
+            
+            
+        ###Handle missing values, same for training and test:
+        x.fillna(0); #replaces missing values with 0
+
+
+
         
         # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
