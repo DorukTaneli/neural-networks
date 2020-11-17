@@ -2,6 +2,7 @@ import torch
 import pickle
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing
 
 class Regressor():
 
@@ -56,7 +57,31 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-
+        
+        ####Calculate and store parameters:
+        if training:
+            #calculate preprocessing values
+        else:
+            #apply existing values
+            
+        
+        ###Handle missing values:
+        x.fillna(0); #replaces missing values with 0
+        
+        #if we need to handle missing values in target array:
+        if isinstance(y, pd.DataFrame):
+            y.fillna(0)
+        
+        
+        ####Handle textual values:
+        lb = preprocessing.LabelBinarizer()
+        
+        
+        
+        ####Normalize numerical values to improve learning:
+        
+        
+        
         # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
         return x, (y if isinstance(y, pd.DataFrame) else None)
