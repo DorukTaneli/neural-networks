@@ -2,6 +2,7 @@ import torch
 import pickle
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing
 
 class Regressor():
 
@@ -56,7 +57,42 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-
+        
+        ####Calculate and store parameters:
+        if training:
+            #calculate preprocessing values
+            pass
+        else:
+            #apply existing values
+            pass
+            
+        
+        ###Handle missing values:
+        x.fillna(0); #replaces missing values with 0
+        
+        #if we need to handle missing values in target array:
+        if isinstance(y, pd.DataFrame):
+            y.fillna(0)
+        
+        
+        ####Handle textual values:
+        lb = preprocessing.LabelBinarizer()
+        
+        x = x.join(pd.DataFrame(lb.fit_transform(x["ocean_proximity"]),
+                          columns=lb.classes_, 
+                          index=x.index))
+        
+#        #if above doesnt work try this:
+#        lb.fit(x['ocean_proximity'])
+#        transformed = lb.transform(x['ocean_proximity'])
+#        ohe_df = pd.DataFrame(transformed)
+#        x = pd.concat([x, ohe_df], axis=1).drop(['ocean_proximity'], axis=1)
+        
+        
+        ####Normalize numerical values to improve learning:
+        
+        
+        
         # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
         return x, (y if isinstance(y, pd.DataFrame) else None)
