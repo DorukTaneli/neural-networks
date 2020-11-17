@@ -61,8 +61,10 @@ class Regressor():
         ####Calculate and store parameters:
         if training:
             #calculate preprocessing values
+            pass
         else:
             #apply existing values
+            pass
             
         
         ###Handle missing values:
@@ -76,6 +78,15 @@ class Regressor():
         ####Handle textual values:
         lb = preprocessing.LabelBinarizer()
         
+        x = x.join(pd.DataFrame(lb.fit_transform(x["ocean_proximity"]),
+                          columns=lb.classes_, 
+                          index=x.index))
+        
+#        #if above doesnt work try this:
+#        lb.fit(x['ocean_proximity'])
+#        transformed = lb.transform(x['ocean_proximity'])
+#        ohe_df = pd.DataFrame(transformed)
+#        x = pd.concat([x, ohe_df], axis=1).drop(['ocean_proximity'], axis=1)
         
         
         ####Normalize numerical values to improve learning:
