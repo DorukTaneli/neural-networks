@@ -245,9 +245,9 @@ class LinearLayer(Layer):
         
         #use the imput and output size as well as the xavier_init method to set initial W and b.
         self._W = xavier_init([n_in, n_out], gain = 1.0)
-        print("initial weights", self._W)
+        #print("initial weights", self._W)
         self._b = xavier_init(n_out, gain = 1.0)
-        print("initial bias", self._b)
+        #print("initial bias", self._b)
 
         self._cache_current = None
         self._grad_W_current = None
@@ -277,14 +277,14 @@ class LinearLayer(Layer):
       
         weights_incl_bias = self._W.copy()
         weights_incl_bias = np.append(weights_incl_bias, [self._b], axis = 0)
-        print("FORWARD: Weights incl bias",np.shape(weights_incl_bias ))
+        #print("FORWARD: Weights incl bias",np.shape(weights_incl_bias ))
         ones = np.ones(np.shape(x)[0])
         
         x_incl_one = x.copy()
         x_incl_one =  np.concatenate((x_incl_one, np.transpose([ones])), axis = 1)
-        print("FORWARD: X incl ones",x_incl_one)
+        #print("FORWARD: X incl ones",x_incl_one)
         output = np.matmul(x_incl_one, weights_incl_bias)
-        print("Output should be 2x4", output)
+        #print("Output should be 2x4", output)
         
         self._cache_current = x
         
@@ -315,12 +315,12 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._grad_W_current = np.matmul(np.transpose(self._cache_current), grad_z)
-        print("gradient weights", self._grad_W_current)
+        #print("gradient weights", self._grad_W_current)
         ones = np.ones(np.shape(grad_z)[0])
         self._grad_b_current = np.matmul(ones, grad_z)
-        print("shape current weights", np.shape(self._W))
+        #print("shape current weights", np.shape(self._W))
         grad_X_current = np.matmul(grad_z, np.transpose(self._W))
-        print("gradient X", self._grad_W_current)
+        #print("gradient X", self._grad_W_current)
         return grad_X_current 
 
         #######################################################################
@@ -409,7 +409,7 @@ class MultiLayerNetwork(object):
         
         for layer in range(0, len(self._layers)):
            x = self._layers[layer].forward(x)
-           print("Shape of Forward pass:",np.shape(x))
+           #print("Shape of Forward pass:",np.shape(x))
         return x
         
         
@@ -436,9 +436,9 @@ class MultiLayerNetwork(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         for layer in range(len(self._layers)-1, -1, -1):
-           print("Shape of grad_z", np.shape(grad_z))
+           #print("Shape of grad_z", np.shape(grad_z))
            grad_z = self._layers[layer].backward(grad_z)
-           print("Shape of Gradient", grad_z)
+           #print("Shape of Gradient", grad_z)
         
         return grad_z
 
@@ -459,7 +459,7 @@ class MultiLayerNetwork(object):
         #######################################################################
         for layer in range(0, len(self._layers)):
             if (isinstance(self._layers[layer], LinearLayer)):
-                print("It's a Linear layer!")
+                #print("It's a Linear layer!")
                 self._layers[layer].update_params(learning_rate)
  
 
@@ -552,14 +552,14 @@ class Trainer(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         shuffable = np.concatenate((input_dataset, target_dataset), axis=1)
-        print(shuffable)
+        #print(shuffable)
         np.random.shuffle(shuffable)
-        print(shuffable)
+        #print(shuffable)
         input_columns=np.shape(input_dataset)[1]
-        print(input_columns)
+        #print(input_columns)
         input_dataset = shuffable[:, :input_columns]
         target_dataset = shuffable[:, input_columns:]
-        print(target_dataset)
+        #print(target_dataset)
         
         return input_dataset, target_dataset
         #######################################################################
@@ -590,22 +590,33 @@ class Trainer(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         
-        for epoch in range(self.nb_epoch):
+        epoch = 0
+        
+        for epoch in range(0, self.nb_epoch):
+        
         
             if (self.shuffle_flag):
                 Trainer.shuffle(input_dataset, target_dataset) #shuffle is static, this is fine
             
         
             input_dataset_batches = np.array_split(input_dataset, self.batch_size)
+            print("Batch size:",np.shape(input_dataset_batches))
             target_dataset_batches = np.array_split(target_dataset, self.batch_size)
             
+            batch = 0
+            
             for x in range(np.shape(input_dataset_batches)[0]):
+                batch+=1
+                
+                print("Batch Iteration (", batch, "/", np.shape(input_dataset_batches)[0],")" )
                 prediction = self.network.forward(input_dataset_batches[x])
                 loss = self._loss_layer.forward(prediction, target_dataset_batches[x])
+                print("Loss:", loss)
                 loss_gradient = self._loss_layer.backward()
                 self.network.backward(loss_gradient)
                 self.network.update_params(self.learning_rate)
-    
+            epoch +=1
+            print("Epoch", epoch)
     
 
         #######################################################################
@@ -652,7 +663,10 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+            
+        
+        self.min = data.min(axis=1)
+        self.max = data.max(axis=1)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -671,7 +685,14 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        #Min max normalisation to range [-1, 1]
+        
+        normalized_data = data.copy()
+        
+        for x in range(len(data)):
+            normalized_data[x] = -1 + ((data[x]-self.min[x])*(2))/(self.max[x]-self.min[x])
+        
+        return normalized_data
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -690,7 +711,8 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        reverted_data = ((data+1)*(self.max-self.min))/2 + self.min
+        return reverted_data
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -698,13 +720,14 @@ class Preprocessor(object):
 
 
 def example_main():
-    '''
+    
     input_dim = 4
     neurons = [16, 3]
     activations = ["relu", "identity"]
     net = MultiLayerNetwork(input_dim, neurons, activations)
 
     dat = np.loadtxt("iris.dat")
+    print(np.shape(dat))
     np.random.shuffle(dat)
 
     x = dat[:, :4]
@@ -739,17 +762,18 @@ def example_main():
     targets = y_val.argmax(axis=1).squeeze()
     accuracy = (preds == targets).mean()
     print("Validation accuracy: {}".format(accuracy))
-    '''
+    
     
     ###################################
     #MY TESTS
     ###################################
-    
+    '''
     #initialisation
     print(xavier_init([3, 4]))
     
     x=np.array([[1,2,3],[4,5, 6]]) #batch size 2, input size 3
-    
+    print(x.max(axis=1))
+    print(x-3)
     
     #Test the linear layer
     ones = np.ones(np.shape(x)[0])
@@ -812,10 +836,12 @@ def example_main():
     print(output_dataset)
     
     
-    trainer = Trainer( network=network, batch_size=32, nb_epoch=10, learning_rate=1.0e-3, shuffle_flag=True, loss_fun="mse")
+    print("TRAINING")
+    trainer = Trainer( network=network, batch_size=2, nb_epoch=10, learning_rate=1.0e-3, shuffle_flag=True, loss_fun="mse")
     trainer.train(input_dataset, target_dataset)
     
     print("Validation loss = ", trainer.eval_loss(input_dataset, target_dataset))
+    '''
      ###################################
     #END MY TESTS
     ###################################
