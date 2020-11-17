@@ -375,9 +375,9 @@ class MultiLayerNetwork(object):
         #Create empty list to store the layers
         layers=[]
         dimensions = [input_dim] + neurons
-        print("Input_dimension", input_dim)
-        print("Neurons", neurons)
-        print("Concat Dimensions", dimensions)
+        #print("Input_dimension", input_dim)
+        #print("Neurons", neurons)
+        #print("Concat Dimensions", dimensions)
         
         for dim in range(1, len(dimensions)):
             layers.append(LinearLayer(dimensions[dim-1], dimensions[dim]))
@@ -386,7 +386,7 @@ class MultiLayerNetwork(object):
             if (activations[dim-1] == "sigmoid"):
                 layers.append(SigmoidLayer())
         
-        print(layers)
+        #print(layers)
         self._layers = layers
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -529,6 +529,7 @@ class Trainer(object):
             self._loss_layer = CrossEntropyLossLayer()
             
         else: print("Please chose a valid loss function")
+        self.loss_collector = np.zeros(nb_epoch)
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -590,7 +591,7 @@ class Trainer(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         
-        epoch = 0
+        
         
         for epoch in range(0, self.nb_epoch):
         
@@ -600,23 +601,25 @@ class Trainer(object):
             
         
             input_dataset_batches = np.array_split(input_dataset, self.batch_size)
-            print("Batch size:",np.shape(input_dataset_batches))
+            #print("Batch size:",np.shape(input_dataset_batches))
             target_dataset_batches = np.array_split(target_dataset, self.batch_size)
             
-            batch = 0
+         
             
             for x in range(np.shape(input_dataset_batches)[0]):
-                batch+=1
                 
-                print("Batch Iteration (", batch, "/", np.shape(input_dataset_batches)[0],")" )
+                
+                #print("Batch Iteration (", batch, "/", np.shape(input_dataset_batches)[0],")" )
                 prediction = self.network.forward(input_dataset_batches[x])
                 loss = self._loss_layer.forward(prediction, target_dataset_batches[x])
-                print("Loss:", loss)
+                
                 loss_gradient = self._loss_layer.backward()
                 self.network.backward(loss_gradient)
                 self.network.update_params(self.learning_rate)
-            epoch +=1
-            print("Epoch", epoch)
+            
+            #print("Epoch", epoch)
+            #print("Loss:", loss)
+            self.loss_collector[epoch]=loss
     
 
         #######################################################################
@@ -711,7 +714,10 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        reverted_data = ((data+1)*(self.max-self.min))/2 + self.min
+        reverted_data = data.copy()
+        
+        for x in range(len(data)):   
+            reverted_data[x] = ((data[x]+1)*(self.max[x]-self.min[x]))/2 + self.min[x]
         return reverted_data
 
         #######################################################################
@@ -727,7 +733,7 @@ def example_main():
     net = MultiLayerNetwork(input_dim, neurons, activations)
 
     dat = np.loadtxt("iris.dat")
-    print(np.shape(dat))
+    #print(np.shape(dat))
     np.random.shuffle(dat)
 
     x = dat[:, :4]
@@ -755,18 +761,22 @@ def example_main():
     )
 
     trainer.train(x_train_pre, y_train)
-    print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
-    print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
+    #print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
+   # print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
 
     preds = net(x_val_pre).argmax(axis=1).squeeze()
     targets = y_val.argmax(axis=1).squeeze()
     accuracy = (preds == targets).mean()
-    print("Validation accuracy: {}".format(accuracy))
+    #print("Validation accuracy: {}".format(accuracy))
     
     
     ###################################
     #MY TESTS
     ###################################
+    
+    import matplotlib.pyplot as plt
+    plt.plot(trainer.loss_collector)
+    
     '''
     #initialisation
     print(xavier_init([3, 4]))
