@@ -74,6 +74,9 @@ class Regressor():
                         index=x.index))
             x = x.drop(['ocean_proximity'], axis=1)
             
+            print("training data: \n")
+            x.info(verbose=True)
+            
             #normalize
             #x = self.min_max_scaler1.fit_transform(x) #fit and transform
             
@@ -84,6 +87,9 @@ class Regressor():
                         index=x.index))
             x = x.drop(['ocean_proximity'], axis=1)
             
+            print("test data: \n")
+            x.info(verbose=True)
+            
             #normalize:
             #x = self.min_max_scaler1.transform(x) #only transform
             
@@ -93,10 +99,6 @@ class Regressor():
 #        transformed = lb.transform(x['ocean_proximity'])
 #        ohe_df = pd.DataFrame(transformed)
 #        x = pd.concat([x, ohe_df], axis=1).drop(['ocean_proximity'], axis=1)
-            
-            
-        #debugging:
-        x.info(verbose=True)
 
         
         # Replace this code with your own
