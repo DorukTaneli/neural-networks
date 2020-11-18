@@ -559,8 +559,10 @@ class Trainer(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         if target_dataset.ndim == 1:
+            to_squeeze = True
             shuffable = np.concatenate((input_dataset, np.transpose([target_dataset])), axis=1)
         else:
+            to_squeeze = False
             shuffable = np.concatenate((input_dataset, target_dataset), axis=1)
 
         #print(shuffable)
@@ -570,7 +572,9 @@ class Trainer(object):
         #print(input_columns)
         input_dataset = shuffable[:, :input_columns]
         target_dataset = shuffable[:, input_columns:]
-        #print(target_dataset)
+
+        if to_squeeze:
+            target_dataset = np.squeeze(target_dataset)
         
         return input_dataset, target_dataset
         #######################################################################
