@@ -702,6 +702,9 @@ class Preprocessor(object):
             if (np.count_nonzero != 0):
                 normalized_data[:, x] = -1 + ((data[:, x]-self.min[x])*(2))/(self.max[x]-self.min[x])
         
+        #Replace NaN with 0.
+        normalized_data = np.nan_to_num(normalized_data)
+        
         return normalized_data
     
 
@@ -866,7 +869,7 @@ def example_main():
     
     
     #Test preprocessing
-    data = np.array([[1.0,7.3,3.],[0.1,-1.,3.],[4.,5.,6.]])
+    data = np.array([[1.0,7.3,6.],[0.1,-1.,6.],[4.,5.,6.]])
     #data = np.array([[1,0,0],[0,0,0],[0.,0.,0.]])
     print("Original Data HOORZ")
     print(data)
@@ -890,8 +893,11 @@ def example_main():
     reverted_data = normalized_data.copy()
     for x in range(np.shape(normalized_data)[1]):   
             reverted_data[:, x] = ((normalized_data[:,x]+1)*(maxi[x]-mini[x]))/2 + mini[x]
+            
+    reverted_data = np.nan_to_num(reverted_data)
     
     print("Reverted", reverted_data)
+    
     
     relu_test = data.copy()
     relu_test[relu_test<=0] = 0
