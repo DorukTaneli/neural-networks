@@ -694,7 +694,7 @@ class Preprocessor(object):
         normalized_data = data.copy()
         
         for x in range(np.shape(data)[1]):
-            if (np.count_nonzero != 0):
+            if (np.count_nonzero(data[:, x]) != 0):
                 normalized_data[:, x] = -1 + ((data[:, x]-self.min[x])*(2))/(self.max[x]-self.min[x])
         
         #Replace NaN with 0.
