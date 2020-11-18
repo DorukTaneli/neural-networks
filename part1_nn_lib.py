@@ -529,7 +529,7 @@ class Trainer(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         if (loss_fun == "mse"):
-            self._loss_layer = MSELossLayer() #potentially needs a layer as input
+            self._loss_layer = MSELossLayer()
         
         if (loss_fun == "cross_entropy"):
             self._loss_layer = CrossEntropyLossLayer()
@@ -601,19 +601,14 @@ class Trainer(object):
         
         for epoch in range(0, self.nb_epoch):
         
-        
             if (self.shuffle_flag):
-                Trainer.shuffle(input_dataset, target_dataset) #shuffle is static, this is fine
+                input_dataset, target_dataset = Trainer.shuffle(input_dataset, target_dataset)
             
-        
             input_dataset_batches = np.array_split(input_dataset, self.batch_size)
             #print("Batch size:",np.shape(input_dataset_batches))
             target_dataset_batches = np.array_split(target_dataset, self.batch_size)
             
-         
-            
-            for x in range(np.shape(input_dataset_batches)[0]):
-                
+            for x in range(np.shape(input_dataset_batches)[0]): 
                 
                 #print("Batch Iteration (", batch, "/", np.shape(input_dataset_batches)[0],")" )
                 prediction = self.network.forward(input_dataset_batches[x])
