@@ -120,7 +120,11 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Store x for the backward pass
         self._cache_current = x
+        
+        #Apply the sigmoid function to all values in x
         sigmoid_output = 1/(1+np.exp(-x))
         
         return sigmoid_output 
@@ -146,11 +150,13 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Calculate the derivative of the activation function
         derivation_sigmoid = (1/(1+np.exp(-self._cache_current)))*(1-(1/(1+np.exp(-self._cache_current))))
+        
+        #Compute the gradients of loss w.r.t. the parameters & inputs of the layer
         grad_X_sigmoid = grad_z*derivation_sigmoid
         return grad_X_sigmoid
-        #Irgendetwas stimmt hier glaube ich noch nicht...
-
         
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -184,8 +190,15 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._cache_current = x
+        
+        
+        
+        #Apply the relu function to all values in x
         relu_output = np.maximum(x, 0)
+        
+        #Store the calculated output for the backward pass    
+        self._cache_current = relu_output
+        
         return relu_output
         
 
@@ -210,15 +223,16 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        relu = np.maximum(self._cache_current, 0)
         
         
+        relu = self._cache_current
+        
+        #Calculate the derivative of the activation function
         relu[relu<=0] = 0
         relu[relu>0] = 1
  
+        #Compute the gradients of loss w.r.t. the parameters & inputs of the layer
         grad_X_relu = grad_z*relu
-        
-        
         
         return grad_X_relu
 
