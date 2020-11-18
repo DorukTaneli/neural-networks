@@ -26,7 +26,7 @@ class Regressor():
         
         #Attributes to store constants to be applied on test data
         self.lb = preprocessing.LabelBinarizer()
-        slf.min_max_scaler1 = preprocessing.MinMaxScaler()
+        self.min_max_scaler1 = preprocessing.MinMaxScaler()
         
         # Replace this code with your own
         X, _ = self._preprocessor(x, training = True)
@@ -64,23 +64,28 @@ class Regressor():
         
         # TODO: Normalize numerical values to improve learning:
         
+        ###Handle missing values, same for training and test:
+        x = x.fillna(0); #replaces missing values with 0
+        
         if training: #training data: calculate and apply preprocessing values            
             #Handle textual values:
             x = x.join(pd.DataFrame(self.lb.fit_transform(x["ocean_proximity"]), #fit LabelBinarizer
-                        columns=lb.classes_, 
+                        columns=self.lb.classes_, 
                         index=x.index))
+            x = x.drop(['ocean_proximity'], axis=1)
             
             #normalize
-            x = self.min_max_scaler1.fit_transform(x) #fit and transform
+            #x = self.min_max_scaler1.fit_transform(x) #fit and transform
             
         else: #test data: apply existing values
             #Handle textual values:
             x = x.join(pd.DataFrame(self.lb.transform(x["ocean_proximity"]), #only transform using LabelBinarizer
-                        columns=lb.classes_, 
+                        columns=self.lb.classes_, 
                         index=x.index))
+            x = x.drop(['ocean_proximity'], axis=1)
             
             #normalize:
-            x = self.min_max_scaler1.transform(x) #only transform
+            #x = self.min_max_scaler1.transform(x) #only transform
             
             
 #        #if handling textual values doesnt work try this:
@@ -90,10 +95,8 @@ class Regressor():
 #        x = pd.concat([x, ohe_df], axis=1).drop(['ocean_proximity'], axis=1)
             
             
-        ###Handle missing values, same for training and test:
-        x.fillna(0); #replaces missing values with 0
-
-
+        #debugging:
+        x.info(verbose=True)
 
         
         # Replace this code with your own
