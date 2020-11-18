@@ -534,7 +534,7 @@ class Trainer(object):
         elif (loss_fun == "cross_entropy"):
             self._loss_layer = CrossEntropyLossLayer()
             
-        else: print("Please chose a valid loss function")
+        else: print("Please choose a valid loss function - '"+loss_fun+"' is not supported.")
         self.loss_collector = np.zeros(nb_epoch)
         #######################################################################
         #                       ** END OF YOUR CODE **
