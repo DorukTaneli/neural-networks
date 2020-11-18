@@ -531,7 +531,7 @@ class Trainer(object):
         if (loss_fun == "mse"):
             self._loss_layer = MSELossLayer()
         
-        if (loss_fun == "cross_entropy"):
+        elif (loss_fun == "cross_entropy"):
             self._loss_layer = CrossEntropyLossLayer()
             
         else: print("Please chose a valid loss function")
@@ -695,7 +695,7 @@ class Preprocessor(object):
         
         for x in range(np.shape(data)[1]):
             if (np.count_nonzero(data[:, x]) != 0):
-                normalized_data[:, x] = -1 + ((data[:, x]-self.min[x])*(2))/(self.max[x]-self.min[x])
+                normalized_data[:, x] = (data[:, x]-self.min[x])/(self.max[x]-self.min[x])
         
         #Replace NaN with 0.
         normalized_data = np.nan_to_num(normalized_data)
@@ -724,7 +724,7 @@ class Preprocessor(object):
         reverted_data = data.copy()
         
         for x in range(np.shape(data)[1]):  
-            reverted_data[:, x] = ((data[:, x]+1)*(self.max[x]-self.min[x]))/2 + self.min[x]
+            reverted_data[:, x] = ((data[:, x])*(self.max[x]-self.min[x])) + self.min[x]
         return reverted_data
     
 
