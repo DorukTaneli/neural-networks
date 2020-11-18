@@ -69,9 +69,8 @@ class Regressor():
         
         if training: #training data: calculate and apply preprocessing values            
             #Handle textual values:
-            x = x.join(pd.DataFrame(self.lb.fit_transform(x["ocean_proximity"]), #fit LabelBinarizer
-                        columns=self.lb.classes_, 
-                        index=x.index))
+            #fit and transform
+            x = x.join(pd.DataFrame(self.lb.fit_transform(x["ocean_proximity"]), columns=self.lb.classes_))
             x = x.drop(['ocean_proximity'], axis=1)
             
             print("training data: \n")
@@ -82,9 +81,8 @@ class Regressor():
             
         else: #test data: apply existing values
             #Handle textual values:
-            x = x.join(pd.DataFrame(self.lb.transform(x["ocean_proximity"]), #only transform using LabelBinarizer
-                        columns=self.lb.classes_, 
-                        index=x.index))
+            #only transform
+            x = x.join(pd.DataFrame(self.lb.transform(x["ocean_proximity"]), columns=self.lb.classes_))
             x = x.drop(['ocean_proximity'], axis=1)
             
             print("test data: \n")
