@@ -693,7 +693,8 @@ class Preprocessor(object):
         normalized_data = data.copy()
         
         for x in range(np.shape(data)[1]):
-            normalized_data[:, x] = -1 + ((data[:, x]-self.min[x])*(2))/(self.max[x]-self.min[x])
+            if (np.count_nonzero != 0):
+                normalized_data[:, x] = -1 + ((data[:, x]-self.min[x])*(2))/(self.max[x]-self.min[x])
         
         return normalized_data
     
@@ -856,8 +857,11 @@ def example_main():
     
     print("Validation loss = ", trainer.eval_loss(input_dataset, target_dataset))
     
+    '''
+    
     #Test preprocessing
     data = np.array([[1.0,7.3,3.],[1.,-1.,3.],[4.,5.,6.]])
+    data = np.array([[1,0,0],[0,0,0],[0.,0.,0.]])
     print("Original Data HOORZ")
     print(data)
     normalized_data= data.copy()
@@ -869,8 +873,10 @@ def example_main():
     #print(data[:, 1]-mini[1])
     
     for x in range(np.shape(data)[1]):
+        if (np.count_nonzero != 0):
             normalized_data[:, x] = -1 + ((data[:, x]-mini[x])*(2))/(maxi[x]-mini[x])
-        
+       
+       
     print("Normalized")
     print(normalized_data)
     
@@ -881,7 +887,7 @@ def example_main():
     
     print("Reverted", reverted_data)
         
-    '''
+    
     
      ###################################
     #END MY TESTS
