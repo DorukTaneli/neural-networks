@@ -558,7 +558,11 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        shuffable = np.concatenate((input_dataset, target_dataset), axis=1)
+        if target_dataset.ndim == 1:
+            shuffable = np.concatenate((input_dataset, np.transpose([target_dataset])), axis=1)
+        else:
+            shuffable = np.concatenate((input_dataset, target_dataset), axis=1)
+
         #print(shuffable)
         np.random.shuffle(shuffable)
         #print(shuffable)
