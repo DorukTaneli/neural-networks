@@ -591,7 +591,7 @@ class Trainer(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         
-        
+    
         
         for epoch in range(0, self.nb_epoch):
         
@@ -668,8 +668,8 @@ class Preprocessor(object):
         #######################################################################
             
         
-        self.min = data.min(axis=1)
-        self.max = data.max(axis=1)
+        self.min = data.min(axis=0)
+        self.max = data.max(axis=0)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -692,10 +692,12 @@ class Preprocessor(object):
         
         normalized_data = data.copy()
         
-        for x in range(len(data)):
-            normalized_data[x] = -1 + ((data[x]-self.min[x])*(2))/(self.max[x]-self.min[x])
+        for x in range(np.shape(data)[1]):
+            normalized_data[:, x] = -1 + ((data[:, x]-self.min[x])*(2))/(self.max[x]-self.min[x])
         
         return normalized_data
+    
+
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -716,9 +718,11 @@ class Preprocessor(object):
         #######################################################################
         reverted_data = data.copy()
         
-        for x in range(len(data)):   
-            reverted_data[x] = ((data[x]+1)*(self.max[x]-self.min[x]))/2 + self.min[x]
+        for x in range(np.shape(data)[1]):  
+            reverted_data[:, x] = ((data[:, x]+1)*(self.max[x]-self.min[x]))/2 + self.min[x]
         return reverted_data
+    
+
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -851,7 +855,34 @@ def example_main():
     trainer.train(input_dataset, target_dataset)
     
     print("Validation loss = ", trainer.eval_loss(input_dataset, target_dataset))
+    
+    #Test preprocessing
+    data = np.array([[1.0,7.3,3.],[1.,-1.,3.],[4.,5.,6.]])
+    print("Original Data HOORZ")
+    print(data)
+    normalized_data= data.copy()
+    mini = data.min( axis=0)
+    maxi = data.max( axis=0)
+    print("MIN pro Spalte", mini)
+    print("MAX pro Spalte", maxi)
+    #print(data[:,1])
+    #print(data[:, 1]-mini[1])
+    
+    for x in range(np.shape(data)[1]):
+            normalized_data[:, x] = -1 + ((data[:, x]-mini[x])*(2))/(maxi[x]-mini[x])
+        
+    print("Normalized")
+    print(normalized_data)
+    
+    
+    reverted_data = normalized_data.copy()
+    for x in range(np.shape(normalized_data)[1]):   
+            reverted_data[:, x] = ((normalized_data[:,x]+1)*(maxi[x]-mini[x]))/2 + mini[x]
+    
+    print("Reverted", reverted_data)
+        
     '''
+    
      ###################################
     #END MY TESTS
     ###################################
