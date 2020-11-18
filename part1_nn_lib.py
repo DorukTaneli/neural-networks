@@ -211,8 +211,13 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         relu = np.maximum(self._cache_current, 0)
-        derivation_relu = np.minimum(1, relu)
-        grad_X_relu = grad_z*derivation_relu
+        grad_X_relu = relu
+        
+        grad_X_relu[grad_X_relu<=0] = 0
+        grad_X_relu[grad_X_relu>0] = 1
+        
+        
+        
         
         return grad_X_relu
 
@@ -861,7 +866,7 @@ def example_main():
     
     #Test preprocessing
     data = np.array([[1.0,7.3,3.],[1.,-1.,3.],[4.,5.,6.]])
-    data = np.array([[1,0,0],[0,0,0],[0.,0.,0.]])
+    #data = np.array([[1,0,0],[0,0,0],[0.,0.,0.]])
     print("Original Data HOORZ")
     print(data)
     normalized_data= data.copy()
@@ -886,6 +891,13 @@ def example_main():
             reverted_data[:, x] = ((normalized_data[:,x]+1)*(maxi[x]-mini[x]))/2 + mini[x]
     
     print("Reverted", reverted_data)
+    
+    relu_test = data.copy()
+    relu_test[relu_test<=0] = 0
+    relu_test[relu_test>0] = 1
+    print(relu_test)
+
+
         
     
     
