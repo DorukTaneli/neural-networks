@@ -64,8 +64,18 @@ class Regressor():
         
         # TODO: Normalize numerical values to improve learning:
         
-        ###Handle missing values, same for training and test:
-        x = x.fillna(0); #replaces missing values with 0
+        #print("===================================FUNCTION START=====================================")
+        
+        #print("before fillna:")
+        #print(x)
+        #x.info(verbose=True)
+        
+        ###Handle missing values:
+        #x = x.fillna(0); #replaces missing values with 0
+        
+        #print("after fillna:")
+        #print(x)
+        #x.info(verbose=True)
         
         if training: #training data: calculate and apply preprocessing values            
             #Handle textual values:
@@ -73,7 +83,11 @@ class Regressor():
             x = x.join(pd.DataFrame(self.lb.fit_transform(x["ocean_proximity"]), columns=self.lb.classes_))
             x = x.drop(['ocean_proximity'], axis=1)
             
-            print("training data: \n")
+            ###Handle missing values:
+            x = x.fillna(0); #replaces missing values with 0
+                
+            print("\ntraining data:")
+            print(x)
             x.info(verbose=True)
             
             #normalize
@@ -85,21 +99,16 @@ class Regressor():
             x = x.join(pd.DataFrame(self.lb.transform(x["ocean_proximity"]), columns=self.lb.classes_))
             x = x.drop(['ocean_proximity'], axis=1)
             
-            print("test data: \n")
+            ###Handle missing values:
+            x = x.fillna(0); #replaces missing values with 0
+            
+            print("\ntest data:")
+            print(x)
             x.info(verbose=True)
             
             #normalize:
             #x = self.min_max_scaler1.transform(x) #only transform
             
-            
-#        #if handling textual values doesnt work try this:
-#        lb.fit(x['ocean_proximity'])
-#        transformed = lb.transform(x['ocean_proximity'])
-#        ohe_df = pd.DataFrame(transformed)
-#        x = pd.concat([x, ohe_df], axis=1).drop(['ocean_proximity'], axis=1)
-
-        
-        # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
         return x, (y if isinstance(y, pd.DataFrame) else None)
 
