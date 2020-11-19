@@ -120,7 +120,11 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Store x for the backward pass
         self._cache_current = x
+        
+        #Apply the sigmoid function to all values in x
         sigmoid_output = 1/(1+np.exp(-x))
         
         return sigmoid_output 
@@ -146,11 +150,13 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Calculate the derivative of the activation function
         derivation_sigmoid = (1/(1+np.exp(-self._cache_current)))*(1-(1/(1+np.exp(-self._cache_current))))
+        
+        #Compute the gradients of loss w.r.t. the parameters & inputs of the layer
         grad_X_sigmoid = grad_z*derivation_sigmoid
         return grad_X_sigmoid
-        #Irgendetwas stimmt hier glaube ich noch nicht...
-
         
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -184,8 +190,15 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._cache_current = x
+        
+        
+        
+        #Apply the relu function to all values in x
         relu_output = np.maximum(x, 0)
+        
+        #Store the calculated output for the backward pass    
+        self._cache_current = relu_output
+        
         return relu_output
         
 
@@ -210,15 +223,16 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        relu = np.maximum(self._cache_current, 0)
         
         
+        relu = self._cache_current
+        
+        #Calculate the derivative of the activation function
         relu[relu<=0] = 0
         relu[relu>0] = 1
  
+        #Compute the gradients of loss w.r.t. the parameters & inputs of the layer
         grad_X_relu = grad_z*relu
-        
-        
         
         return grad_X_relu
 
@@ -246,14 +260,12 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        #self._W = None
-        #self._b = None
         
-        #use the imput and output size as well as the xavier_init method to set initial W and b.
+        
+        #Use the imput and output size as well as the xavier_init method to set initial W and b.
         self._W = xavier_init([n_in, n_out], gain = 1.0)
-        #print("initial weights", self._W)
         self._b = xavier_init(n_out, gain = 1.0)
-        #print("initial bias", self._b)
+       
 
         self._cache_current = None
         self._grad_W_current = None
@@ -280,24 +292,22 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         
-      
+        #Concatenate weights and bias
         weights_incl_bias = self._W.copy()
         weights_incl_bias = np.append(weights_incl_bias, [self._b], axis = 0)
-        #print("FORWARD: Weights incl bias",np.shape(weights_incl_bias ))
-        ones = np.ones(np.shape(x)[0])
         
+        #Add a column of ones to the input data to account for the bias term
+        ones = np.ones(np.shape(x)[0])
         x_incl_one = x.copy()
         x_incl_one =  np.concatenate((x_incl_one, np.transpose([ones])), axis = 1)
-        #print("FORWARD: X incl ones",x_incl_one)
-        output = np.matmul(x_incl_one, weights_incl_bias)
-        #print("Output should be 2x4", output)
         
+        #Calculate the output by mltiplying the input data and the weights + bias
+        output = np.matmul(x_incl_one, weights_incl_bias)
+        
+        #Store input data for the backward pass
         self._cache_current = x
         
         return output
-        
-        
-        pass
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -320,13 +330,17 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Calculate & store the gradients w.r.t. the weights
         self._grad_W_current = np.matmul(np.transpose(self._cache_current), grad_z)
-        #print("gradient weights", self._grad_W_current)
+    
+        #Calculate & store the gradients w.r.t. the bias
         ones = np.ones(np.shape(grad_z)[0])
         self._grad_b_current = np.matmul(ones, grad_z)
-        #print("shape current weights", np.shape(self._W))
+ 
+        #Calculate & return the gradients w.r.t. the input data
         grad_X_current = np.matmul(grad_z, np.transpose(self._W))
-        #print("gradient X", self._grad_W_current)
+       
         return grad_X_current 
 
         #######################################################################
@@ -344,6 +358,8 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Perform one step of gradient descent to update and store the weights and bias
         self._W = self._W - learning_rate*self._grad_W_current
         self._b = self._b - learning_rate*self._grad_b_current
 
@@ -380,19 +396,21 @@ class MultiLayerNetwork(object):
         #######################################################################
         #Create empty list to store the layers
         layers=[]
-        dimensions = [input_dim] + neurons
-        #print("Input_dimension", input_dim)
-        #print("Neurons", neurons)
-        #print("Concat Dimensions", dimensions)
         
+        #Combine the input dimension and layer dimensions in one array 
+        dimensions = [input_dim] + neurons
+        
+        #Loop through the list of dimensions to create the layers accordingly
         for dim in range(1, len(dimensions)):
+            #Create a linear layer (current dimension = output dimension; previous dimension = input dimension)
             layers.append(LinearLayer(dimensions[dim-1], dimensions[dim]))
+            #Add an activation function layer in accordance with the activations list
             if (activations[dim-1] == "relu"):
                 layers.append(ReluLayer())
             if (activations[dim-1] == "sigmoid"):
                 layers.append(SigmoidLayer())
         
-        #print(layers)
+        #Store the generated list of layers
         self._layers = layers
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -413,13 +431,12 @@ class MultiLayerNetwork(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         
+        #Perform a forward pass by looping through all layers
         for layer in range(0, len(self._layers)):
            x = self._layers[layer].forward(x)
-           #print("Shape of Forward pass:",np.shape(x))
+          
         return x
         
-        
-
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -441,11 +458,11 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        for layer in range(len(self._layers)-1, -1, -1):
-           #print("Shape of grad_z", np.shape(grad_z))
-           grad_z = self._layers[layer].backward(grad_z)
-           #print("Shape of Gradient", grad_z)
         
+        #Perform a backward pass by looping through all layers (back to front)
+        for layer in range(len(self._layers)-1, -1, -1):
+           grad_z = self._layers[layer].backward(grad_z)
+          
         return grad_z
 
         #######################################################################
@@ -463,9 +480,10 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Update the weights and biases for all linear layers
         for layer in range(0, len(self._layers)):
             if (isinstance(self._layers[layer], LinearLayer)):
-                #print("It's a Linear layer!")
                 self._layers[layer].update_params(learning_rate)
  
 
@@ -528,14 +546,20 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Specify the loss function layer in accordance with the function parameters
         if (loss_fun == "mse"):
             self._loss_layer = MSELossLayer()
         
         elif (loss_fun == "cross_entropy"):
             self._loss_layer = CrossEntropyLossLayer()
-            
+         
+        #Print an error message if the argument does not match the expected values
         else: print("Please choose a valid loss function - '"+loss_fun+"' is not supported.")
+        
+        #Create a vector to store loss for visualisation of the loss curve
         self.loss_collector = np.zeros(nb_epoch)
+        
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -558,21 +582,24 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Concatenate the input dataset and the target dataset to ensure the dataset is shuffled but the inputs and targets still match correctly
         if target_dataset.ndim == 1:
             to_squeeze = True
             shuffable = np.concatenate((input_dataset, np.transpose([target_dataset])), axis=1)
         else:
             to_squeeze = False
             shuffable = np.concatenate((input_dataset, target_dataset), axis=1)
-
-        #print(shuffable)
+        
+        #Shuffle the data
         np.random.shuffle(shuffable)
-        #print(shuffable)
+        
+        #Split shuffled input dataset and target dataset
         input_columns=np.shape(input_dataset)[1]
-        #print(input_columns)
         input_dataset = shuffable[:, :input_columns]
         target_dataset = shuffable[:, input_columns:]
 
+        #Restore original shape (if target is a vector)
         if to_squeeze:
             target_dataset = np.squeeze(target_dataset)
         
@@ -605,29 +632,36 @@ class Trainer(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         
-    
-        
+        #Loop through the specified number of epochs
         for epoch in range(0, self.nb_epoch):
         
+            #Shuffle data if shuffle_flag = True
             if (self.shuffle_flag):
                 input_dataset, target_dataset = Trainer.shuffle(input_dataset, target_dataset)
             
+            #Split data into batches
             input_dataset_batches = np.array_split(input_dataset, self.batch_size)
-            #print("Batch size:",np.shape(input_dataset_batches))
             target_dataset_batches = np.array_split(target_dataset, self.batch_size)
             
+            #Loop through the batches to train the neural network
             for x in range(np.shape(input_dataset_batches)[0]): 
                 
-                #print("Batch Iteration (", batch, "/", np.shape(input_dataset_batches)[0],")" )
+                #Forward pass
                 prediction = self.network.forward(input_dataset_batches[x])
+                
+                #Calculate loss
                 loss = self._loss_layer.forward(prediction, target_dataset_batches[x])
                 
+                #Calculate gradient of loss
                 loss_gradient = self._loss_layer.backward()
+                
+                #Backward pass
                 self.network.backward(loss_gradient)
+                
+                #Update parameters
                 self.network.update_params(self.learning_rate)
             
-            #print("Epoch", epoch)
-            #print("Loss:", loss)
+            #Store loss per epoch for visualisation of the loss curve
             self.loss_collector[epoch]=loss
     
 
@@ -648,7 +682,11 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        #Use the (trained) network to produce a prediction
         prediction = self.network.forward(input_dataset)
+        
+        #Calculate and return the achieved loss
         loss = self._loss_layer.forward(prediction, target_dataset)
         return loss
 
@@ -676,7 +714,7 @@ class Preprocessor(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
             
-        
+        #Store the mimimum and maximum values per column / feature
         self.min = data.min(axis=0)
         self.max = data.max(axis=0)
 
@@ -697,10 +735,12 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        #Min max normalisation to range [-1, 1]
+        
+        #Min max normalisation – range [0, 1]
         
         normalized_data = data.copy()
         
+        #Loop through the columns and normalise each on a scale of 0 to 1
         for x in range(np.shape(data)[1]):
             if (np.count_nonzero(data[:, x]) != 0):
                 normalized_data[:, x] = (data[:, x]-self.min[x])/(self.max[x]-self.min[x])
@@ -709,8 +749,6 @@ class Preprocessor(object):
         normalized_data = np.nan_to_num(normalized_data)
         
         return normalized_data
-    
-
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -729,14 +767,14 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
         reverted_data = data.copy()
         
+        #Loop through the columns of the normalised data and restore the original values
         for x in range(np.shape(data)[1]):  
             reverted_data[:, x] = ((data[:, x])*(self.max[x]-self.min[x])) + self.min[x]
         return reverted_data
     
-
-
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -778,23 +816,23 @@ def example_main():
     )
 
     trainer.train(x_train_pre, y_train)
-    #print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
-   # print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
+    print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
+    print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
 
     preds = net(x_val_pre).argmax(axis=1).squeeze()
     targets = y_val.argmax(axis=1).squeeze()
     accuracy = (preds == targets).mean()
-    #print("Validation accuracy: {}".format(accuracy))
+    print("Validation accuracy: {}".format(accuracy))
     
     
+    '''
     ###################################
-    #MY TESTS
+    #ADDITIONAL TESTS
     ###################################
     
     import matplotlib.pyplot as plt
     plt.plot(trainer.loss_collector)
-    
-    '''
+  
     #initialisation
     print(xavier_init([3, 4]))
     
@@ -911,14 +949,13 @@ def example_main():
     #derivation_relu = np.minimum(1, relu)
     #grad_X_relu = grad_z*derivation_relu
 
-    #print(grad_X_relu)
-        
-     '''
+    #print(grad_X_relu)   
+   
     
-     ###################################
-    #END MY TESTS
     ###################################
-
+    #END ADDITIONAL TESTS
+    ###################################
+    '''
 
 if __name__ == "__main__":
     example_main()
