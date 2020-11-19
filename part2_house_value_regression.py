@@ -77,6 +77,7 @@ class Regressor():
         #print(x)
         #x.info(verbose=True)
         
+        """
         if training: #training data: calculate and apply preprocessing values            
             #Handle textual values:
             #fit and transform
@@ -108,7 +109,10 @@ class Regressor():
             
             #normalize:
             #x = self.min_max_scaler1.transform(x) #only transform
-            
+        """
+        
+        x = x.fillna(0)
+        
         # Return preprocessed x and y, return None for y if it was None
         return x, (y if isinstance(y, pd.DataFrame) else None)
 
