@@ -26,6 +26,7 @@ class Regressor():
         
         #Attributes to store constants to be applied on test data
         self.lb = preprocessing.LabelBinarizer()
+        self.lb.fit(x["ocean_proximity"]) 
         self.min_max_scaler1 = preprocessing.MinMaxScaler()
         
         # Replace this code with your own
@@ -77,11 +78,11 @@ class Regressor():
         #print(x)
         #x.info(verbose=True)
         
-        """
+        
         if training: #training data: calculate and apply preprocessing values            
             #Handle textual values:
             #fit and transform
-            x = x.join(pd.DataFrame(self.lb.fit_transform(x["ocean_proximity"]), columns=self.lb.classes_))
+            x = x.join(pd.DataFrame(self.lb.transform(x["ocean_proximity"]), columns=self.lb.classes_))
             x = x.drop(['ocean_proximity'], axis=1)
             
             ###Handle missing values:
@@ -109,7 +110,7 @@ class Regressor():
             
             #normalize:
             #x = self.min_max_scaler1.transform(x) #only transform
-        """
+        
         
         #x = x.fillna(0)
 
