@@ -26,7 +26,7 @@ class Regressor():
         
         #Attributes to store constants to be applied on test data
         self.lb = preprocessing.LabelBinarizer()
-        self.lb.fit(x["ocean_proximity"]) 
+        self.lb.fit_transform(x["ocean_proximity"]) 
         self.min_max_scaler1 = preprocessing.MinMaxScaler()
         
         # Replace this code with your own
