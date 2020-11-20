@@ -86,7 +86,7 @@ class Regressor():
             x = x.drop(['ocean_proximity'], axis=1)
             
             ###Handle missing values:
-            x = x.fillna(0); #replaces missing values with 0
+            x = x.fillna(x.mean()); #replaces missing values with 0
                 
             print("\ntraining data:")
             print(x)
@@ -102,7 +102,7 @@ class Regressor():
             x = x.drop(['ocean_proximity'], axis=1)
             
             ###Handle missing values:
-            x = x.fillna(0); #replaces missing values with 0
+            x = x.fillna(x.mean()); #replaces missing values with 0
             
             print("\ntest data:")
             print(x)
