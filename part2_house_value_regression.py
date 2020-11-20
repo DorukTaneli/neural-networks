@@ -28,6 +28,7 @@ class Regressor():
         self.lb = preprocessing.LabelBinarizer()
         self.lb.fit_transform(x["ocean_proximity"]) 
         self.min_max_scaler1 = preprocessing.MinMaxScaler()
+        #self.min_max_scaler.fit_transform(x)
         
         # Replace this code with your own
         X, _ = self._preprocessor(x, training = True)
