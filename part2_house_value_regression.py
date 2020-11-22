@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+from sklearn.metrics import mean_squared_error
 
 class Regressor():
 
@@ -192,7 +193,20 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
-        return 0 # Replace this code with your own
+        
+        y_true = Y.numpy()
+        y_pred = self.predict(x)
+        
+        '''
+        UNCOMMENT WHEN PREDICT IS IMPLEMENTED
+        
+        mse = mean_squared_error(y_true, y_pred)
+        rmse = sqrt(mse)
+        
+        return rmse
+        '''
+        
+        return 0
 
         #######################################################################
         #                       ** END OF YOUR CODE **
