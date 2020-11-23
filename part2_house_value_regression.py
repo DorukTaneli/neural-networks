@@ -28,8 +28,10 @@ class Regressor():
         #Attributes to store constants to be applied on test data
         self.lb = preprocessing.LabelBinarizer()
         self.lb.fit_transform(x["ocean_proximity"]) 
-        self.min_max_scaler1 = preprocessing.MinMaxScaler()
-        #self.min_max_scaler.fit_transform(x)
+        self.scaler1 = preprocessing.RobustScaler()
+        self.scaler1.fit_transform(x[['longitude', 'latitude', 'housing_median_age', 
+                                      'total_rooms', 'total_bedrooms', 'population', 
+                                      'households', 'median_income']])
         
         # Replace this code with your own
         X, _ = self._preprocessor(x, training = True)
@@ -64,23 +66,7 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        
-        # TODO: Normalize numerical values to improve learning:
-        
-        #print("===================================FUNCTION START=====================================")
-        
-        #print("before fillna:")
-        #print(x)
-        #x.info(verbose=True)
-        
-        ###Handle missing values:
-        #x = x.fillna(0); #replaces missing values with 0
-        
-        #print("after fillna:")
-        #print(x)
-        #x.info(verbose=True)
-        
-        
+             
         if training: #training data: calculate and apply preprocessing values            
             #Handle textual values:
             #fit and transform
@@ -88,14 +74,19 @@ class Regressor():
             x = x.drop(['ocean_proximity'], axis=1)
             
             ###Handle missing values:
-            x = x.fillna(x.mean()); #replaces missing values with 0
-                
-            print("\ntraining data:")
-            print(x)
-            x.info(verbose=True)
+            x = x.fillna(x.mean()); #replaces missing values with mean
             
             #normalize
-            #x = self.min_max_scaler1.fit_transform(x) #fit and transform
+            x[['longitude', 'latitude', 'housing_median_age', 
+                'total_rooms', 'total_bedrooms', 'population', 
+                'households', 'median_income']] = self.scaler1.transform(x[['longitude', 'latitude', 'housing_median_age', 
+                                                                            'total_rooms', 'total_bedrooms', 'population', 
+                                                                            'households', 'median_income']])
+            
+            #print("\ntraining data:")
+            #print(x)
+            #x.info(verbose=True)
+            
             
         else: #test data: apply existing values
             #Handle textual values:
@@ -104,20 +95,23 @@ class Regressor():
             x = x.drop(['ocean_proximity'], axis=1)
             
             ###Handle missing values:
-            x = x.fillna(x.mean()); #replaces missing values with 0
-            
-            print("\ntest data:")
-            print(x)
-            x.info(verbose=True)
+            x = x.fillna(x.mean()); #replaces missing values with mean
             
             #normalize:
-            #x = self.min_max_scaler1.transform(x) #only transform
+            x[['longitude', 'latitude', 'housing_median_age', 
+                'total_rooms', 'total_bedrooms', 'population', 
+                'households', 'median_income']] = self.scaler1.transform(x[['longitude', 'latitude', 'housing_median_age', 
+                                                                            'total_rooms', 'total_bedrooms', 'population', 
+                                                                            'households', 'median_income']])
+            
+            #print("\ntest data:")
+            #print(x)
+            #x.info(verbose=True)
         
-        
-        xreturn = torch.tensor(x.values)
+    
         
         # Return preprocessed x and y, return None for y if it was None
-        return xreturn, (torch.tensor(y.values) if isinstance(y, pd.DataFrame) else None)
+        return torch.tensor(x.values), (torch.tensor(y.values) if isinstance(y, pd.DataFrame) else None)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
