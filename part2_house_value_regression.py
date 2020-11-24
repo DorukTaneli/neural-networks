@@ -1,11 +1,14 @@
-import torch
+import torch 
+import torch.optim as optim
+import torch.nn as nn
+import torch.nn.functional as F
 import pickle
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from sklearn.metrics import mean_squared_error
 
-class Regressor():
+class Regressor(nn.Module):
 
     def __init__(self, x, nb_epoch = 1000):
         # You can add any input parameters you need
@@ -38,12 +41,22 @@ class Regressor():
         self.input_size = X.shape[1]
         self.output_size = 1
         self.nb_epoch = nb_epoch 
+        self.batch_size = 10
+        
+        super(Regressor, self).__init__()
+        self.hidden = torch.nn.Linear(self.input_size,  self.batch_size)   # hidden layer
+        self.output = torch.nn.Linear(self.batch_size, 1)
         return
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
-
+    def forward(self, x):
+        x = F.relu(self.hidden(x))      # activation function for hidden layer
+        print(x)
+        x = self.output(x)             # linear output
+        return x
+    
     def _preprocessor(self, x, y = None, training = False):
         """ 
         Preprocess input of the network.
@@ -137,6 +150,25 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
+        model = self #not sure but may be?
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.2)
+        loss_func = torch.nn.MSELoss()
+        batches_per_epoch =  X.shape[1] //  model.batch_size
+        max_batches = model.nb_epoch * batches_per_epoch
+        print(max_batches)
+        for b in range(max_batches):
+            curr_bat = np.random.choice( X.shape[1], model.batch_size,
+                replace=False)
+            X_batch = X[curr_bat].float()
+            Y_batch = Y[curr_bat].float()
+            output = model.forward(X_batch)
+            optimizer.zero_grad()
+            loss_obj = loss_func(output, Y_batch)
+            loss_obj.backward()  # Compute gradients
+            optimizer.step()
+            if b % 100 == 0:
+                print("batch = {}     batch loss = {}".format(b, loss_obj.item()))
+                model.fit(x, y) #not sure but may be?
         return self
 
         #######################################################################
