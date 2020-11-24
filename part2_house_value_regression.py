@@ -168,7 +168,7 @@ class Regressor(nn.Module):
             optimizer.step()
             if b % 100 == 0:
                 print("batch = {}     batch loss = {}".format(b, loss_obj.item()))
-                model.fit(x, y) #not sure but may be?
+                #model.fit(x, y) #not sure but may be?
         return self
 
         #######################################################################
