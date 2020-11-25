@@ -146,7 +146,7 @@ class Regressor():
 
         self.net.train()  # set training mode
         print(self.net)  # net architecture
-        bat_size = 10
+        bat_size = 64
         loss_func = nn.MSELoss()  # mean squared error
         optimizer = optim.SGD(self.net.parameters(), lr=0.01)
         n_items = len(X)
@@ -165,9 +165,10 @@ class Regressor():
             optimizer.step()
             if b % (max_batches // 10) == 0:
                 print("batch = %6d" % b, end="")
-                print("  batch loss = %7.4f" % loss_obj.item(), end=" ")
+                print("  batch loss = %7.4f" % loss_obj.item(), end="\n")
+                self.net.eval()
                 self.net.train()
-      
+    
         print("Training complete \n")
         return self.net
 
@@ -231,7 +232,6 @@ class Regressor():
         rmse = math.sqrt(mse)
         
         return rmse
-        
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -262,13 +262,13 @@ class Regressor():
 class Net(nn.Module):
   def __init__(self):
     super(Net, self).__init__()
-    self.hid1 = nn.Linear(13, 10)  # 13-(10-10)-1
-    self.hid2 = nn.Linear(10, 10)
-    self.oupt = nn.Linear(10, 1)
+    self.hid1 = nn.Linear(13, 32)  # 13-(10-10)-1
+    self.hid2 = nn.Linear(32, 16)
+    self.oupt = nn.Linear(16, 1)
 
   def forward(self, x):
-    z = torch.tanh(self.hid1(x))
-    z = torch.tanh(self.hid2(z))
+    z = torch.relu(self.hid1(x))
+    z = torch.relu(self.hid2(z))
     z = self.oupt(z)  # no activation, aka Identity()
     return z
     
