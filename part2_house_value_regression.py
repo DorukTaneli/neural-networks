@@ -165,25 +165,16 @@ class Regressor():
             optimizer.step()
             if b % (max_batches // 10) == 0:
                 print("batch = %6d" % b, end="")
-                print("  batch loss = %7.4f" % loss_obj.item(), end="")
-                net = self.net.eval()
-                acc = self.accuracy(net, X_t, Y_t)
-                net = net.train()
-                print( oupt, Y_t)
-                print("  accuracy = %0.2f%%" % acc)      
+                print("  batch loss = %7.4f" % loss_obj.item(), end=" ")
+                self.net.train()
+      
         print("Training complete \n")
         return self.net
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
-
-    def accuracy(self,mdl,X,Y):
-
-        max_vals, max_indices = torch.max(mdl(X),1)
-        n = max_indices.size(0) #index 0 for extracting the # of elements
-        train_acc = (max_indices == Y).sum(dtype=torch.float32)/n
-        return train_acc        
+       
     
     def predict(self, x):
         """
