@@ -3,12 +3,13 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 import pickle
+import math
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from sklearn.metrics import mean_squared_error
 
-class Regressor(nn.Module):
+class Regressor():
 
     def __init__(self, x, nb_epoch = 1000):
         # You can add any input parameters you need
@@ -41,22 +42,14 @@ class Regressor(nn.Module):
         self.input_size = X.shape[1]
         self.output_size = 1
         self.nb_epoch = nb_epoch 
-        self.batch_size = 10
-        
-        super(Regressor, self).__init__()
-        self.hidden = torch.nn.Linear(self.input_size,  self.batch_size)   # hidden layer
-        self.output = torch.nn.Linear(self.batch_size, 1)
+        self.net = Net()
+
         return
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
-    def forward(self, x):
-        x = F.relu(self.hidden(x))      # activation function for hidden layer
-        print(x)
-        x = self.output(x)             # linear output
-        return x
-    
+
     def _preprocessor(self, x, y = None, training = False):
         """ 
         Preprocess input of the network.
@@ -150,32 +143,48 @@ class Regressor(nn.Module):
         #######################################################################
 
         X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
-        model = self #not sure but may be?
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.2)
-        loss_func = torch.nn.MSELoss()
-        batches_per_epoch =  X.shape[1] //  model.batch_size
-        max_batches = model.nb_epoch * batches_per_epoch
-        print(max_batches)
+
+        self.net.train()  # set training mode
+        print(self.net)  # net architecture
+        bat_size = 10
+        loss_func = nn.MSELoss()  # mean squared error
+        optimizer = optim.SGD(self.net.parameters(), lr=0.01)
+        n_items = len(X)
+        batches_per_epoch = n_items // bat_size
+        max_batches = self.nb_epoch * batches_per_epoch
+        print("Starting training")
         for b in range(max_batches):
-            curr_bat = np.random.choice( X.shape[1], model.batch_size,
-                replace=False)
-            X_batch = X[curr_bat].float()
-            Y_batch = Y[curr_bat].float()
-            output = model.forward(X_batch)
+            curr_bat = np.random.choice(n_items, bat_size,
+                                        replace=False)
+            X_t = X[curr_bat].float()
+            Y_t = Y[curr_bat].view(bat_size,1).float()
             optimizer.zero_grad()
-            loss_obj = loss_func(output, Y_batch)
-            loss_obj.backward()  # Compute gradients
+            oupt = self.net(X_t)
+            loss_obj = loss_func(oupt, Y_t)
+            loss_obj.backward()
             optimizer.step()
-            if b % 100 == 0:
-                print("batch = {}     batch loss = {}".format(b, loss_obj.item()))
-                #model.fit(x, y) #not sure but may be?
-        return self
+            if b % (max_batches // 10) == 0:
+                print("batch = %6d" % b, end="")
+                print("  batch loss = %7.4f" % loss_obj.item(), end="")
+                net = self.net.eval()
+                acc = self.accuracy(net, X_t, Y_t)
+                net = net.train()
+                print( oupt, Y_t)
+                print("  accuracy = %0.2f%%" % acc)      
+        print("Training complete \n")
+        return self.net
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-            
+    def accuracy(self,mdl,X,Y):
+
+        max_vals, max_indices = torch.max(mdl(X),1)
+        n = max_indices.size(0) #index 0 for extracting the # of elements
+        train_acc = (max_indices == Y).sum(dtype=torch.float32)/n
+        return train_acc        
+    
     def predict(self, x):
         """
         Ouput the value corresponding to an input x.
@@ -188,13 +197,16 @@ class Regressor(nn.Module):
             {np.darray} -- Predicted value for the given input (batch_size, 1).
 
         """
+        
+        
 
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
 
         X, _ = self._preprocessor(x, training = False) # Do not forget
-        pass
+        X=X.float()
+        return self.net(X)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -218,27 +230,57 @@ class Regressor(nn.Module):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
-        
-        y_true = Y.numpy()
-        y_pred = self.predict(x)
-        
-        '''
-        UNCOMMENT WHEN PREDICT IS IMPLEMENTED
+        _, Y = self._preprocessor(x, y = y, training = False) # Do not forget
+    
+        y_true = Y.float().detach().numpy()
+        y_pred = self.predict(x).detach().numpy()
+
         
         mse = mean_squared_error(y_true, y_pred)
-        rmse = sqrt(mse)
+        rmse = math.sqrt(mse)
         
         return rmse
-        '''
         
-        return 0
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
+# class Net(nn.Module):
+#   def __init__(self):
+#     super(Net, self).__init__()
+#     self.hid1 = nn.Linear(13, 10)  # 13-(10-10)-1
+#     self.hid2 = nn.Linear(10, 10)
+#     self.oupt = nn.Linear(10, 1)
 
+#   def forward(self, x):
+#     z = nn.ReLU(self.hid1(x))
+#     z = torch.tanh(self.hid2(z))
+#     z = self.oupt(z)  # no activation, aka Identity()
+#     return z
+    
+# class Net(torch.nn.Module):
+#     def __init__(self, n_feature = 13, n_hidden = 10, n_output =1) :
+#         super(Net, self).__init__()
+#         self.hidden = torch.nn.Linear(n_feature, n_hidden)   # hidden layer
+#         self.predict = torch.nn.Linear(n_hidden, n_output)   # output layer
 
+#     def forward(self, x):
+#         x = F.relu(self.hidden(x))      # activation function for hidden layer
+#         x = self.predict(x)             # linear output
+#         return x
+class Net(nn.Module):
+  def __init__(self):
+    super(Net, self).__init__()
+    self.hid1 = nn.Linear(13, 10)  # 13-(10-10)-1
+    self.hid2 = nn.Linear(10, 10)
+    self.oupt = nn.Linear(10, 1)
+
+  def forward(self, x):
+    z = torch.tanh(self.hid1(x))
+    z = torch.tanh(self.hid2(z))
+    z = self.oupt(z)  # no activation, aka Identity()
+    return z
+    
 def save_regressor(trained_model): 
     """ 
     Utility function to save the trained regressor model in part2_model.pickle.
