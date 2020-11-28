@@ -7,11 +7,13 @@ import pickle
 import math
 import numpy as np
 import pandas as pd
+import sklearn
 from sklearn import preprocessing
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 from sklearn.base import BaseEstimator, ClassifierMixin
+import random
 # from skopt.searchcv import BayesSearchCV
 # from skopt.space import Integer, Real, Categorical 
 # from skopt.utils import use_named_args
@@ -48,6 +50,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
         
         # Replace this code with your own
         X, _ = self._preprocessor(x, training = True)
+        self.loss_values = []
         self.input_size = X.shape[1]
         self.output_size = 1
         
@@ -133,15 +136,16 @@ class Regressor(BaseEstimator, ClassifierMixin):
             #x.info(verbose=True)
         
     
-        
+        print(type(x.values))
         # Return preprocessed x and y, return None for y if it was None
-        return T.tensor(x.values).float(), (T.tensor(y.values).float() if isinstance(y, pd.DataFrame) else None)
+        #return T.tensor(x.values).float(), (T.tensor(y.values).float() if isinstance(y, pd.DataFrame) else None)
+        return x.values, (y.values if isinstance(y, pd.DataFrame) else None)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
-
-        
+ 
+    
     def fit(self, x, y):
         """
         Regressor training function
@@ -175,9 +179,14 @@ class Regressor(BaseEstimator, ClassifierMixin):
         #number of possible values to take
         n_items = len(X)
         #initiate the list of loss values
-        loss_values = []
+        
         #iterate through number of epochs
         for epoch in range(1, self.nb_epoch+1):
+            #reshuffling
+            X, Y = sklearn.utils.shuffle(X, Y)
+            X_t_full = T.tensor(X).float()
+            Y_t_full = T.tensor(Y).float()
+            
             #loss per epoch
             running_loss = 0.0
             #itterate thorugh number of itterations per epoch
@@ -187,8 +196,8 @@ class Regressor(BaseEstimator, ClassifierMixin):
                 current_batch = np.random.choice(n_items, self.batch_size,
                                         replace=False)
                 #get the X and Y tensors
-                X_t = X[current_batch]
-                Y_t = Y[current_batch].view(self.batch_size,1)
+                X_t = X_t_full[current_batch]
+                Y_t = Y_t_full[current_batch].view(self.batch_size,1)
                 #set gradient of optimised Tensors to 0
                 optimizer.zero_grad()
                 #get the prediction
@@ -207,14 +216,9 @@ class Regressor(BaseEstimator, ClassifierMixin):
                     print('epoch: %d, batch: %d, loss: %.3f' %
                           (epoch, i + 1,loss_obj.item() ))
             #add the final loss for this epoch
-            loss_values.append(running_loss)
-        
-        #plotting the overall loss epoch graph for training data    
+            self.loss_values.append(running_loss)
+         
         print("Training complete \n")
-        plt.plot(list(range(1, self.nb_epoch+1)),loss_values)
-        plt.title("Params: epoch: {}, batch size {},learning rate {}".format(self.nb_epoch, self.batch_size, self.learning_rate))
-        plt.ylabel('Loss')
-        plt.xlabel('Epoch Number')
         #return model
         return self
 
@@ -233,6 +237,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
         """
         #get the tensor for the X value
         X, _ = self._preprocessor(x, training = False) 
+        X = T.tensor(X).float()
         #start the evaluation mode
         self.net.eval()
         #reduces memory usage and speed up computations 
@@ -254,15 +259,21 @@ class Regressor(BaseEstimator, ClassifierMixin):
             {float} -- Quantification of the efficiency of the model.
 
         """
+        #plotting the overall loss epoch graph for training    
+        plt.plot(list(range(1, self.nb_epoch+1)),self.loss_values)
+        plt.title("Params: epoch: {}, batch size {},learning rate {}".format(self.nb_epoch, self.batch_size, self.learning_rate))
+        plt.ylabel('Loss')
+        plt.xlabel('Epoch Number')
+
         #get the Y tensor of true values
         _, Y = self._preprocessor(x, y = y, training = False) # Do not forget
         #make it into numpy
-        y_true = Y.detach().numpy()
+        #y_true = Y.detach().numpy()
         #get the prediction using the predict method
         y_pred = self.predict(x)
 
         #calculate the mse for the values
-        mse = mean_squared_error(y_true, y_pred)
+        mse = mean_squared_error(y, y_pred)
         #square root to get rmse
         rmse = math.sqrt(mse)
         return rmse
@@ -390,4 +401,5 @@ def example_main():
 
 if __name__ == "__main__":
     example_main()
+
 
