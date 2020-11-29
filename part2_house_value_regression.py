@@ -41,15 +41,14 @@ class Regressor(BaseEstimator, ClassifierMixin):
         #######################################################################
         
         #Attributes to store constants to be applied on test data
+        self.yScaler = preprocessing.RobustScaler()
+        self.xScaler = preprocessing.RobustScaler()
         self.lb = preprocessing.LabelBinarizer()
-        self.lb.fit(x["ocean_proximity"]) 
-        self.scaler1 = preprocessing.RobustScaler()
-        self.scaler1.fit(x[['longitude', 'latitude', 'housing_median_age', 
-                            'total_rooms', 'total_bedrooms', 'population', 
-                            'households', 'median_income']])
         
-        # Replace this code with your own
-        X, _ = self._preprocessor(x, training = True)
+        self.x = x
+        if x is not None:
+            X, _ = self._preprocessor(x, training = True) 
+
         self.loss_values = []
         self.input_size = X.shape[1]
         self.output_size = 1
@@ -93,30 +92,49 @@ class Regressor(BaseEstimator, ClassifierMixin):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-             
-        if 'ocean_proximity' in x.columns: #not preprocessed           
-            # Handle textual values:
-            x = x.join(pd.DataFrame(self.lb.transform(x["ocean_proximity"]), columns=self.lb.classes_))
-            x = x.drop(['ocean_proximity'], axis=1)
-            
-            # Handle missing values:
-            x = x.fillna(x.mean()); #replaces missing values with mean
-            
-            # Normalize
-            x[['longitude', 'latitude', 'housing_median_age', 
-                'total_rooms', 'total_bedrooms', 'population', 
-                'households', 'median_income']] = self.scaler1.transform(x[['longitude', 'latitude', 'housing_median_age', 
-                                                                            'total_rooms', 'total_bedrooms', 'population', 
-                                                                            'households', 'median_income']])
-            
-        #print("\preprocessing data:")
-        #print(x)
-        #x.info(verbose=True)
         
-        print(type(x.values))
-        # Return preprocessed x and y, return None for y if it was None
-        #return T.tensor(x.values).float(), (T.tensor(y.values).float() if isinstance(y, pd.DataFrame) else None)
-        return x.values, (y.values if isinstance(y, pd.DataFrame) else None)
+        #Solve SettingWithCopyWarning
+        _x = x.copy()
+        if y is not None:
+            _y = y.copy()
+            
+        
+        #Normalize y, save scaler for inverse transform
+        if y is not None:
+            column = ['median_house_value']
+            if training:
+                _y.loc[:,column] = self.yScaler.fit_transform(_y.loc[:,column])
+            else:
+                _y.loc[:,column] = self.yScaler.transform(_y.loc[:,column])
+
+
+        #Normalize x
+        columnsToNormalize = ['longitude', 'latitude', 'housing_median_age', 
+                              'total_rooms', 'total_bedrooms', 'population', 
+                              'households', 'median_income']
+        
+        if training:
+            _x.loc[:,columnsToNormalize] = self.xScaler.fit_transform(_x.loc[:,columnsToNormalize])
+        else:
+            _x.loc[:,columnsToNormalize] = self.xScaler.transform(_x.loc[:,columnsToNormalize])
+        
+
+        #Handle missing values
+        _x = _x.fillna(x.mean())
+        
+
+        #Handle textual values
+        oceanProximityValues = ["<1H OCEAN", "INLAND", "NEAR OCEAN", "NEAR BAY", "ISLAND"]
+
+        if training:
+            self.lb.fit(oceanProximityValues)
+
+        ohe = pd.DataFrame(self.lb.transform(_x.loc[:,'ocean_proximity']), columns=self.lb.classes_)
+        _x = _x.drop(columns=['ocean_proximity'])
+        _x.reset_index(drop=True, inplace=True)
+        _x = _x.join(ohe)
+
+        return _x.values, (_y.values if isinstance(y, pd.DataFrame) else None)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -195,6 +213,11 @@ class Regressor(BaseEstimator, ClassifierMixin):
             #add the final loss for this epoch
             self.loss_values.append(running_loss)
          
+        #plotting the overall loss epoch graph for training    
+        plt.plot(list(range(1, self.nb_epoch+1)),self.loss_values)
+        plt.title("Params: epoch: {}, batch size {},learning rate {}".format(self.nb_epoch, self.batch_size, self.learning_rate))
+        plt.ylabel('Loss')
+        plt.xlabel('Epoch Number')
         print("Training complete \n")
         #return model
         return self
@@ -220,8 +243,12 @@ class Regressor(BaseEstimator, ClassifierMixin):
         #reduces memory usage and speed up computations 
         with T.no_grad():
             #predict the y 
-            y_pred = self.net(X).detach().numpy()
-        return y_pred
+            y_pred = self.net(X)
+            
+        trueOutput = self.yScaler.inverse_transform(y_pred)
+        
+        return trueOutput
+
 
     def score(self, x, y):
         """
@@ -236,11 +263,6 @@ class Regressor(BaseEstimator, ClassifierMixin):
             {float} -- Quantification of the efficiency of the model.
 
         """
-        #plotting the overall loss epoch graph for training    
-        plt.plot(list(range(1, self.nb_epoch+1)),self.loss_values)
-        plt.title("Params: epoch: {}, batch size {},learning rate {}".format(self.nb_epoch, self.batch_size, self.learning_rate))
-        plt.ylabel('Loss')
-        plt.xlabel('Epoch Number')
 
         #get the Y tensor of true values
         _, Y = self._preprocessor(x, y = y, training = False) # Do not forget
@@ -320,26 +342,23 @@ def RegressorHyperParameterSearch(x, y):
     """
 
     #parameters we want to search
-    params = [{'nb_epoch': range(200, 1000),
+    params = [{'nb_epoch': range(400, 1000),
                'batch_size': [32, 64, 96], 
                'learning_rate': [0.002, 0.001, 0.0005],
-               'H1': range(40,80), 
-               'H2': range(20, 60),
-               'H3': range(2, 40),
+               'H1': range(30,70), 
+               'H2': range(15, 40),
+               'H3': range(2, 30),
                'DRP': [0, 0.1, 0.2]
                }]
     #initiating the model
-    model = Regressor(x)
+
     #setting up the search
     search = RandomizedSearchCV(
-        model,
+        Regressor(x),
         param_distributions=params,
-        n_jobs=1,
         cv=5,
-        n_iter=30,
+        n_iter=3,
         scoring="neg_mean_squared_error",
-        verbose=4,
-        random_state=42
         )
     #fitting the search wiht the parameters
     search.fit(x, y)
@@ -367,7 +386,7 @@ def example_main():
 
     # Training
     #params = RegressorHyperParameterSearch(x_train, y_train)
-    regressor = Regressor(x_train, nb_epoch = 1000, batch_size =  64, learning_rate = 0.001, H1 = 42, H2 = 27, H3 = 10, DRP = 0.1)
+    regressor = Regressor(x_train, nb_epoch = 744, batch_size =  32, learning_rate = 0.001, H1 = 43, H2 = 37, H3 = 32, DRP = 0.1)
     regressor.fit(x_test, y_test)
     save_regressor(regressor)
 
