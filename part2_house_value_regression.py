@@ -35,10 +35,6 @@ class Regressor(BaseEstimator, ClassifierMixin):
             - nb_epoch {int} -- number of epoch to train the network.
 
         """
-
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
         
         #Attributes to store constants to be applied on test data
         self.yScaler = preprocessing.RobustScaler()
@@ -66,10 +62,6 @@ class Regressor(BaseEstimator, ClassifierMixin):
 
         return
 
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
-
     def _preprocessor(self, x, y = None, training = False):
         """ 
         Preprocess input of the network.
@@ -88,11 +80,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
                 (batch_size, 1).
 
         """
-
-        #######################################################################
-        #                       ** START OF YOUR CODE **
-        #######################################################################
-        
+             
         #Solve SettingWithCopyWarning
         _x = x.copy()
         if y is not None:
@@ -134,12 +122,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
         _x.reset_index(drop=True, inplace=True)
         _x = _x.join(ohe)
 
-        return _x.values, (_y.values if isinstance(y, pd.DataFrame) else None)
-
-        #######################################################################
-        #                       ** END OF YOUR CODE **
-        #######################################################################
- 
+        return _x.values, (_y.values if isinstance(y, pd.DataFrame) else None) 
     
     def fit(self, x, y):
         """
@@ -158,6 +141,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
         X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
         
         self.net.train()  # set training mode
+        self.loss_values = []
         
         #loss_func = nn.L1Loss() 
         
@@ -215,7 +199,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
          
         #plotting the overall loss epoch graph for training    
         plt.plot(list(range(1, self.nb_epoch+1)),self.loss_values)
-        plt.title("Params: epoch: {}, batch size {},learning rate {}".format(self.nb_epoch, self.batch_size, self.learning_rate))
+        plt.title("Model's Loss")
         plt.ylabel('Loss')
         plt.xlabel('Epoch Number')
         print("Training complete \n")
@@ -246,9 +230,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
             y_pred = self.net(X)
             
         trueOutput = self.yScaler.inverse_transform(y_pred)
-        
         return trueOutput
-
 
     def score(self, x, y):
         """
@@ -348,7 +330,7 @@ def RegressorHyperParameterSearch(x, y):
                'H1': range(30,70), 
                'H2': range(15, 40),
                'H3': range(2, 30),
-               'DRP': [0, 0.1, 0.2]
+               'DRP': [0, 0.1, 0.15]
                }]
     #initiating the model
 
@@ -363,10 +345,9 @@ def RegressorHyperParameterSearch(x, y):
     #fitting the search wiht the parameters
     search.fit(x, y)
     
-    search.get_params(deep=True)
-    print(search.best_params_)
+    print('Best Parameters: {}'.format(search.best_params_))
 
-    return  search.best_params_
+    return  search.best_estimator_
 
 
 def example_main():
@@ -385,8 +366,8 @@ def example_main():
     x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=test_split)
 
     # Training
-    #params = RegressorHyperParameterSearch(x_train, y_train)
-    regressor = Regressor(x_train, nb_epoch = 744, batch_size =  32, learning_rate = 0.001, H1 = 43, H2 = 37, H3 = 32, DRP = 0.1)
+    best_rergressor = RegressorHyperParameterSearch(x_train, y_train)
+    regressor = best_rergressor
     regressor.fit(x_test, y_test)
     save_regressor(regressor)
 
