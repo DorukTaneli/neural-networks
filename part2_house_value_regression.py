@@ -191,7 +191,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
                 running_loss += loss_obj.item()
             
                 #for each 100th epoch, print the epoch's loss outcome
-                if epoch % 100 == 0 and (i+1) % itt_per_epoch== 0:
+                if (epoch % 100 == 0 and (i+1) % itt_per_epoch== 0) or (epoch == 1 and (i+1) % itt_per_epoch== 0):
                     print('epoch: %d, epoch loss: %.3f' %
                           (epoch, running_loss ))
             #add the final loss for this epoch
