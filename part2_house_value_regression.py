@@ -42,11 +42,11 @@ class Regressor(BaseEstimator, ClassifierMixin):
         
         #Attributes to store constants to be applied on test data
         self.lb = preprocessing.LabelBinarizer()
-        self.lb.fit_transform(x["ocean_proximity"]) 
+        self.lb.fit(x["ocean_proximity"]) 
         self.scaler1 = preprocessing.RobustScaler()
-        self.scaler1.fit_transform(x[['longitude', 'latitude', 'housing_median_age', 
-                                      'total_rooms', 'total_bedrooms', 'population', 
-                                      'households', 'median_income']])
+        self.scaler1.fit(x[['longitude', 'latitude', 'housing_median_age', 
+                            'total_rooms', 'total_bedrooms', 'population', 
+                            'households', 'median_income']])
         
         # Replace this code with your own
         X, _ = self._preprocessor(x, training = True)
@@ -94,48 +94,25 @@ class Regressor(BaseEstimator, ClassifierMixin):
         #                       ** START OF YOUR CODE **
         #######################################################################
              
-        if training: #training data: calculate and apply preprocessing values            
-            #Handle textual values:
-            #fit and transform
+        if 'ocean_proximity' in x.columns: #not preprocessed           
+            # Handle textual values:
             x = x.join(pd.DataFrame(self.lb.transform(x["ocean_proximity"]), columns=self.lb.classes_))
             x = x.drop(['ocean_proximity'], axis=1)
             
-            ###Handle missing values:
+            # Handle missing values:
             x = x.fillna(x.mean()); #replaces missing values with mean
             
-            #normalize
+            # Normalize
             x[['longitude', 'latitude', 'housing_median_age', 
                 'total_rooms', 'total_bedrooms', 'population', 
                 'households', 'median_income']] = self.scaler1.transform(x[['longitude', 'latitude', 'housing_median_age', 
                                                                             'total_rooms', 'total_bedrooms', 'population', 
                                                                             'households', 'median_income']])
             
-            #print("\ntraining data:")
-            #print(x)
-            #x.info(verbose=True)
-            
-            
-        else: #test data: apply existing values
-            #Handle textual values:
-            #only transform
-            x = x.join(pd.DataFrame(self.lb.transform(x["ocean_proximity"]), columns=self.lb.classes_))
-            x = x.drop(['ocean_proximity'], axis=1)
-            
-            ###Handle missing values:
-            x = x.fillna(x.mean()); #replaces missing values with mean
-            
-            #normalize:
-            x[['longitude', 'latitude', 'housing_median_age', 
-                'total_rooms', 'total_bedrooms', 'population', 
-                'households', 'median_income']] = self.scaler1.transform(x[['longitude', 'latitude', 'housing_median_age', 
-                                                                            'total_rooms', 'total_bedrooms', 'population', 
-                                                                            'households', 'median_income']])
-            
-            #print("\ntest data:")
-            #print(x)
-            #x.info(verbose=True)
+        #print("\preprocessing data:")
+        #print(x)
+        #x.info(verbose=True)
         
-    
         print(type(x.values))
         # Return preprocessed x and y, return None for y if it was None
         #return T.tensor(x.values).float(), (T.tensor(y.values).float() if isinstance(y, pd.DataFrame) else None)
