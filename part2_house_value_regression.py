@@ -22,7 +22,7 @@ import random
 
 class Regressor(BaseEstimator, ClassifierMixin):
 
-    def __init__(self, x, nb_epoch = 1000, batch_size =  64, learning_rate = 0.01, H1 = 60, H2 = 20, H3 = 10 , DRP = 0.15):
+    def __init__(self, x, nb_epoch = 1000, batch_size =  64, learning_rate = 0.01, H1 = 45, H2 = 30, H3 = 15 , DRP = 0.1):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -150,15 +150,15 @@ class Regressor(BaseEstimator, ClassifierMixin):
         #Adam optimiser
         optimizer = optim.Adam(self.net.parameters(), lr=self.learning_rate) 
         #number of itterations per epoch
-        itt_per_epoch = self.nb_epoch // self.batch_size
         
-        print("Starting training with parrameters: epoch: {}, batch size: {}, learning rate: {}"
+        
+        print("Starting training with parameters: epoch: {}, batch size: {}, learning rate: {}"
               .format(self.nb_epoch, self.batch_size, self.learning_rate))
         print("Net Architecture: \n{}".format(self.net))
         #number of possible values to take
         n_items = len(X)
-        #initiate the list of loss values
-        
+
+        itt_per_epoch = n_items // self.batch_size
         #iterate through number of epochs
         for epoch in range(1, self.nb_epoch+1):
             #reshuffling
@@ -172,8 +172,8 @@ class Regressor(BaseEstimator, ClassifierMixin):
             for i in range(itt_per_epoch):
                 #get indices to the values for the current batch
                 #do not replace so no repeats
-                current_batch = np.random.choice(n_items, self.batch_size,
-                                        replace=False)
+                current_batch = np.random.choice(n_items, self.batch_size, 
+                                                 replace=False)
                 #get the X and Y tensors
                 X_t = X_t_full[current_batch]
                 Y_t = Y_t_full[current_batch].view(self.batch_size,1)
@@ -190,10 +190,10 @@ class Regressor(BaseEstimator, ClassifierMixin):
                 #add current loss to the overall loss per epoch
                 running_loss += loss_obj.item()
             
-                #for each 100th epoch and 10th batch print the loss outcome
-                if epoch % 100 == 0 and (i+1) % 10== 0:
-                    print('epoch: %d, batch: %d, loss: %.3f' %
-                          (epoch, i + 1,loss_obj.item() ))
+                #for each 100th epoch, print the epoch's loss outcome
+                if epoch % 100 == 0 and (i+1) % itt_per_epoch== 0:
+                    print('epoch: %d, epoch loss: %.3f' %
+                          (epoch, running_loss ))
             #add the final loss for this epoch
             self.loss_values.append(running_loss)
          
@@ -264,24 +264,24 @@ class Net(nn.Module):
     #initiate the Net
     super(Net, self).__init__()
     #3FFC layers and 1 output layer
-    self.hid1 = nn.Linear(D_in, H1)
-    self.hid2 = nn.Linear(H1, H2)
-    self.hid3 = nn.Linear(H2, H3)
+    self.inpt = nn.Linear(D_in, H1)
+    self.hid1 = nn.Linear(H1, H2)
+    self.hid2 = nn.Linear(H2, H3)
     self.oupt = nn.Linear(H3, D_out)
     #dropout (so not fully connected)
     self.drop = nn.Dropout(DRP, inplace=True)
 
   def forward(self, x):
     #relu activation function
-    z = F.relu(self.hid1(x))
+    z = F.relu(self.inpt(x))
+    #applying dropout after FFC layer
+    z = self.drop(z)
+    #relu activation function
+    z = F.relu(self.hid1(z))
     #applying dropout after FFC layer
     z = self.drop(z)
     #relu activation function
     z = F.relu(self.hid2(z))
-    #applying dropout after FFC layer
-    z = self.drop(z)
-    #relu activation function
-    z = F.relu(self.hid3(z))
      #applying dropout after FFC layer
     z = self.drop(z)
     #output
@@ -325,27 +325,26 @@ def RegressorHyperParameterSearch(x, y):
 
     #parameters we want to search
     params = [{'nb_epoch': range(400, 1000),
-               'batch_size': [32, 64, 96], 
-               'learning_rate': [0.002, 0.001, 0.0005],
-               'H1': range(30,70), 
-               'H2': range(15, 40),
-               'H3': range(2, 30),
-               'DRP': [0, 0.1, 0.15]
-               }]
-    #initiating the model
+                'batch_size': [32, 64, 96], 
+                'learning_rate': [0.002, 0.001, 0.0005],
+                'H1': range(30,70), 
+                'H2': range(15, 40),
+                'H3': range(2, 30),
+                'DRP': [0, 0.1, 0.15]
+                }]
 
     #setting up the search
     search = RandomizedSearchCV(
         Regressor(x),
         param_distributions=params,
-        cv=5,
-        n_iter=3,
+        cv = 3,
+        n_iter=1,
         scoring="neg_mean_squared_error",
         )
     #fitting the search wiht the parameters
     search.fit(x, y)
     
-    print('Best Parameters: {}'.format(search.best_params_))
+    print('Best Parameters: \n{}'.format(search.best_params_))
 
     return  search.best_estimator_
 
@@ -368,15 +367,14 @@ def example_main():
     # Training
     best_rergressor = RegressorHyperParameterSearch(x_train, y_train)
     regressor = best_rergressor
-    #regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
     # Error
     error = regressor.score(x_test, y_test)
     print("\nRegressor error: {}\n".format(error))
 
-
 if __name__ == "__main__":
     example_main()
+
 
 
