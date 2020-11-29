@@ -365,8 +365,8 @@ def example_main():
     x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=test_split)
 
     # Training
-    best_rergressor = RegressorHyperParameterSearch(x_train, y_train)
-    regressor = best_rergressor
+    best_regressor = RegressorHyperParameterSearch(x_train, y_train)
+    regressor = best_regressor
     save_regressor(regressor)
 
     # Error
