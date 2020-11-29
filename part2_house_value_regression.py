@@ -368,7 +368,7 @@ def example_main():
     # Training
     best_rergressor = RegressorHyperParameterSearch(x_train, y_train)
     regressor = best_rergressor
-    regressor.fit(x_test, y_test)
+    #regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
     # Error
