@@ -229,7 +229,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
             #predict the y 
             y_pred = self.net(X)
             
-        trueOutput = self.yScaler.inverse_transform(y_pred)
+        trueOutput = self.yScaler.inverse_transform(y_pred.to_numpy())
         return trueOutput
 
     def score(self, x, y):
