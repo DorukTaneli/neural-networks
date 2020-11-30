@@ -11,9 +11,8 @@ import sklearn
 from sklearn import preprocessing
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error
 from sklearn.base import BaseEstimator, ClassifierMixin
-import random
+
 # from skopt.searchcv import BayesSearchCV
 # from skopt.space import Integer, Real, Categorical 
 # from skopt.utils import use_named_args
@@ -22,7 +21,7 @@ import random
 
 class Regressor(BaseEstimator, ClassifierMixin):
 
-    def __init__(self, x, nb_epoch = 1000, batch_size =  64, learning_rate = 0.01, H1 = 45, H2 = 30, H3 = 15 , DRP = 0.1):
+    def __init__(self, x, nb_epoch = 770, batch_size =  64, learning_rate = 0.001, H1 = 58, H2 = 32, H3 = 19 , DRP = 0.1):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -44,11 +43,11 @@ class Regressor(BaseEstimator, ClassifierMixin):
         self.x = x
         if x is not None:
             X, _ = self._preprocessor(x, training = True) 
-        #init the parameters
+
         self.loss_values = []
         self.input_size = X.shape[1]
         self.output_size = 1
-        #init the parameters
+        
         self.nb_epoch = nb_epoch 
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -142,7 +141,8 @@ class Regressor(BaseEstimator, ClassifierMixin):
         
         self.net.train()  # set training mode
         self.loss_values = []
-                
+        
+        
         # smooth (Huber Loss)
         loss_func = nn.SmoothL1Loss() 
         #Adam optimiser
@@ -226,7 +226,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
         with T.no_grad():
             #predict the y 
             y_pred = self.net(X)
-        #rescale back 
+            
         trueOutput = self.yScaler.inverse_transform(y_pred)
         return trueOutput
 
@@ -243,8 +243,10 @@ class Regressor(BaseEstimator, ClassifierMixin):
             {float} -- Quantification of the efficiency of the model.
 
         """
+
         #get the Y tensor of true values
         _, Y = self._preprocessor(x, y = y, training = False) 
+        #get the prediction using the predict method
         y_pred = self.predict(x)
 
         #calculate the mse for the values
@@ -258,24 +260,24 @@ class Net(nn.Module):
     #initiate the Net
     super(Net, self).__init__()
     #3FFC layers and 1 output layer
-    self.hid1 = nn.Linear(D_in, H1)
-    self.hid2 = nn.Linear(H1, H2)
-    self.hid3 = nn.Linear(H2, H3)
+    self.inpt = nn.Linear(D_in, H1)
+    self.hid1 = nn.Linear(H1, H2)
+    self.hid2 = nn.Linear(H2, H3)
     self.oupt = nn.Linear(H3, D_out)
-    #dropout 
+    #dropout (so not fully connected)
     self.drop = nn.Dropout(DRP, inplace=True)
 
   def forward(self, x):
     #relu activation function
-    z = F.relu(self.hid1(x))
+    z = F.relu(self.inpt(x))
+    #applying dropout after FFC layer
+    z = self.drop(z)
+    #relu activation function
+    z = F.relu(self.hid1(z))
     #applying dropout after FFC layer
     z = self.drop(z)
     #relu activation function
     z = F.relu(self.hid2(z))
-    #applying dropout after FFC layer
-    z = self.drop(z)
-    #relu activation function
-    z = F.relu(self.hid3(z))
      #applying dropout after FFC layer
     z = self.drop(z)
     #output
@@ -286,6 +288,7 @@ def save_regressor(trained_model):
     """ 
     Utility function to save the trained regressor model in part2_model.pickle.
     """
+    # If you alter this, make sure it works in tandem with load_regressor
     with open('part2_model.pickle', 'wb') as target:
         pickle.dump(trained_model, target)
     print("\nSaved model in part2_model.pickle\n")
@@ -295,6 +298,7 @@ def load_regressor():
     """ 
     Utility function to load the trained regressor model in part2_model.pickle.
     """
+    # If you alter this, make sure it works in tandem with save_regressor
     with open('part2_model.pickle', 'rb') as target:
         trained_model = pickle.load(target)
     print("\nLoaded model in part2_model.pickle\n")
@@ -302,7 +306,7 @@ def load_regressor():
 
 
 def RegressorHyperParameterSearch(x, y): 
-
+    # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
     in the Regressor class.
@@ -316,8 +320,8 @@ def RegressorHyperParameterSearch(x, y):
     """
 
     #parameters we want to search
-    params = [{'nb_epoch': range(400, 1000),
-                'batch_size': [32, 64, 96], 
+    params = [{'nb_epoch': range(600, 1000),
+                'batch_size': [48, 64, 96], 
                 'learning_rate': [0.002, 0.001, 0.0005],
                 'H1': range(30,70), 
                 'H2': range(15, 40),
@@ -329,8 +333,8 @@ def RegressorHyperParameterSearch(x, y):
     search = RandomizedSearchCV(
         Regressor(x),
         param_distributions=params,
-        cv = 3,
-        n_iter=1,
+        cv = 2,
+        n_iter= 1,
         scoring="neg_mean_squared_error",
         )
     #fitting the search wiht the parameters
@@ -357,8 +361,9 @@ def example_main():
     x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=test_split)
 
     # Training
-    best_regressor, regressor_params = RegressorHyperParameterSearch(x_train, y_train)
-    regressor = best_regressor
+    best_rergressor, regressor_params = RegressorHyperParameterSearch(x_train, y_train)
+    regressor = best_rergressor
+    regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
     # Error
