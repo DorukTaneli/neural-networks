@@ -145,8 +145,8 @@ class Regressor(BaseEstimator, ClassifierMixin):
         
         #loss_func = nn.L1Loss() 
         
-        # mean squared error
-        loss_func = nn.MSELoss() 
+        # smooth (Huber Loss)
+        loss_func = nn.SmoothL1Loss() 
         #Adam optimiser
         optimizer = optim.Adam(self.net.parameters(), lr=self.learning_rate) 
         #number of itterations per epoch
