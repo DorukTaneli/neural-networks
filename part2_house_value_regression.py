@@ -44,6 +44,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
         if x is not None:
             X, _ = self._preprocessor(x, training = True) 
 
+        #init parameters
         self.loss_values = []
         self.input_size = X.shape[1]
         self.output_size = 1
