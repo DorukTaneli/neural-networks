@@ -1,6 +1,6 @@
 FILES IN THE DIRECTORY:
-part1_nn_lib.py:    code for part1
-iris.dat:           data for part1
+part1_nn_lib.py:    		    code for part1
+iris.dat:           		    data for part1
 part2_house_value_regression.py:    code for part2
 housing.csv:                        data for part2
 part2_model.pickle:                 resulting model from part2
@@ -10,6 +10,17 @@ report.pdf:                         architecture, methodology and explanations o
 
 
 TO RUN CODE FOR PART1:
+>python3 part1_nn_lib.py
+
+DEFAULT: the example_main() method is called which trains a neural network for classification on the iris dataset (iris.dat) and prints the train loss, validation loss and accuracy
+
+OPTIONAL: To train a neural network on another classification or regression problem, adapt the code in the example.main() method or create and call an alternative main method. In the main method:
+- Initialise the network using the MultiLayerNetwork class and specify the input dimension, number of neurons per layer and activation functions per layer
+- Load the dataset, specify features x and labels y, split into train and validation set
+- Initialise the trainer using the Trainer class and specify network, batch-size, epochs, learning rate, loss function & shuffle flag
+- preprocessor.apply(): preprocess the data using the Preprocessor class (optional)
+- trainer.train(): train the network on the training data
+- trainer.eval(): evaluate the predictions on the validation data 
 
 
 
