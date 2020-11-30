@@ -44,11 +44,11 @@ class Regressor(BaseEstimator, ClassifierMixin):
         self.x = x
         if x is not None:
             X, _ = self._preprocessor(x, training = True) 
-
+        #init the parameters
         self.loss_values = []
         self.input_size = X.shape[1]
         self.output_size = 1
-        
+        #init the parameters
         self.nb_epoch = nb_epoch 
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -138,13 +138,11 @@ class Regressor(BaseEstimator, ClassifierMixin):
 
         """
         #get the torch of X and Y
-        X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
+        X, Y = self._preprocessor(x, y = y, training = True)
         
         self.net.train()  # set training mode
         self.loss_values = []
-        
-        #loss_func = nn.L1Loss() 
-        
+                
         # smooth (Huber Loss)
         loss_func = nn.SmoothL1Loss() 
         #Adam optimiser
@@ -228,7 +226,7 @@ class Regressor(BaseEstimator, ClassifierMixin):
         with T.no_grad():
             #predict the y 
             y_pred = self.net(X)
-            
+        #rescale back 
         trueOutput = self.yScaler.inverse_transform(y_pred)
         return trueOutput
 
@@ -245,12 +243,8 @@ class Regressor(BaseEstimator, ClassifierMixin):
             {float} -- Quantification of the efficiency of the model.
 
         """
-
         #get the Y tensor of true values
-        _, Y = self._preprocessor(x, y = y, training = False) # Do not forget
-        #make it into numpy
-        #y_true = Y.detach().numpy()
-        #get the prediction using the predict method
+        _, Y = self._preprocessor(x, y = y, training = False) 
         y_pred = self.predict(x)
 
         #calculate the mse for the values
@@ -264,24 +258,24 @@ class Net(nn.Module):
     #initiate the Net
     super(Net, self).__init__()
     #3FFC layers and 1 output layer
-    self.inpt = nn.Linear(D_in, H1)
-    self.hid1 = nn.Linear(H1, H2)
-    self.hid2 = nn.Linear(H2, H3)
+    self.hid1 = nn.Linear(D_in, H1)
+    self.hid2 = nn.Linear(H1, H2)
+    self.hid3 = nn.Linear(H2, H3)
     self.oupt = nn.Linear(H3, D_out)
-    #dropout (so not fully connected)
+    #dropout 
     self.drop = nn.Dropout(DRP, inplace=True)
 
   def forward(self, x):
     #relu activation function
-    z = F.relu(self.inpt(x))
-    #applying dropout after FFC layer
-    z = self.drop(z)
-    #relu activation function
-    z = F.relu(self.hid1(z))
+    z = F.relu(self.hid1(x))
     #applying dropout after FFC layer
     z = self.drop(z)
     #relu activation function
     z = F.relu(self.hid2(z))
+    #applying dropout after FFC layer
+    z = self.drop(z)
+    #relu activation function
+    z = F.relu(self.hid3(z))
      #applying dropout after FFC layer
     z = self.drop(z)
     #output
@@ -292,7 +286,6 @@ def save_regressor(trained_model):
     """ 
     Utility function to save the trained regressor model in part2_model.pickle.
     """
-    # If you alter this, make sure it works in tandem with load_regressor
     with open('part2_model.pickle', 'wb') as target:
         pickle.dump(trained_model, target)
     print("\nSaved model in part2_model.pickle\n")
@@ -302,7 +295,6 @@ def load_regressor():
     """ 
     Utility function to load the trained regressor model in part2_model.pickle.
     """
-    # If you alter this, make sure it works in tandem with save_regressor
     with open('part2_model.pickle', 'rb') as target:
         trained_model = pickle.load(target)
     print("\nLoaded model in part2_model.pickle\n")
@@ -310,7 +302,7 @@ def load_regressor():
 
 
 def RegressorHyperParameterSearch(x, y): 
-    # Ensure to add whatever inputs you deem necessary to this function
+
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
     in the Regressor class.
@@ -346,7 +338,7 @@ def RegressorHyperParameterSearch(x, y):
     
     print('Best Parameters: \n{}'.format(search.best_params_))
 
-    return  search.best_estimator_
+    return  search.best_estimator_, search.best_params_
 
 
 def example_main():
@@ -365,7 +357,7 @@ def example_main():
     x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=test_split)
 
     # Training
-    best_regressor = RegressorHyperParameterSearch(x_train, y_train)
+    best_regressor, regressor_params = RegressorHyperParameterSearch(x_train, y_train)
     regressor = best_regressor
     save_regressor(regressor)
 
